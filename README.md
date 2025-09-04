@@ -1,4 +1,4 @@
-# Sistemas Distribuidos Grupo i
+# TP de Sistemas Distribuidos – Grupo I – gRPC, microservicios y frontend
 
 Sistema distribuido para la gestión de donaciones y eventos solidarios de la ONG Empuje Comunitario.
 
