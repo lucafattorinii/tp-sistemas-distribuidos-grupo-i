@@ -24,7 +24,7 @@ El sistema está compuesto por los siguientes componentes:
 ## Estructura del Proyecto
 
 ```
-tp-empuje-comunitario/
+tp-sistemas-distribuidos-grupo-i
 ├── proto/                  # Archivos .proto para gRPC
 ├── gateway-fastapi/        # API Gateway en FastAPI
 ├── frontend-thymeleaf/     # Interfaz de usuario
