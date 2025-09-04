@@ -1,4 +1,4 @@
-# ONG Empuje Comunitario - Sistema de Gestión
+# Sistemas Distribuidos Grupo i
 
 Sistema distribuido para la gestión de donaciones y eventos solidarios de la ONG Empuje Comunitario.
 
