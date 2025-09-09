@@ -1,5 +1,3 @@
-# ONG Empuje Comunitario - Sistema de Gestión
-
 Sistema distribuido para la gestión de donaciones y eventos solidarios de la ONG Empuje Comunitario.
 
 ## Arquitectura
@@ -57,7 +55,3 @@ tp-empuje-comunitario/
 ## Documentación de la API
 
 La documentación de la API estará disponible en `http://localhost:8000/docs` una vez que el gateway esté en ejecución.
-
-## Licencia
-
-[MIT](LICENSE)
