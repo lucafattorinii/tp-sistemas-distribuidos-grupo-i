@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="user-service/src/main/java"/>
+	<classpathentry kind="lib" path="user-service/build/tmp/.cache/expanded/zip_ff7bf8f04f99dc306508d1c81e47a68b/jacocoagent.jar"/>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.2.0/spring-boot-autoconfigure-3.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.2.0/spring-boot-autoconfigure-3.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.boot"/>
+			<attribute name="maven.artifactId" value="spring-boot-autoconfigure"/>
+			<attribute name="maven.version" value="3.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/data/spring-data-jpa/3.2.0/spring-data-jpa-3.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/data/spring-data-jpa/3.2.0/spring-data-jpa-3.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.data"/>
+			<attribute name="maven.artifactId" value="spring-data-jpa"/>
+			<attribute name="maven.version" value="3.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/boot/spring-boot/3.2.0/spring-boot-3.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/boot/spring-boot/3.2.0/spring-boot-3.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.boot"/>
+			<attribute name="maven.artifactId" value="spring-boot"/>
+			<attribute name="maven.version" value="3.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/assertj/assertj-core/3.24.2/assertj-core-3.24.2.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/assertj/assertj-core/3.24.2/assertj-core-3.24.2-sources.jar">
+		<attributes>
+			<attribute name="test" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.assertj"/>
+			<attribute name="maven.artifactId" value="assertj-core"/>
+			<attribute name="maven.version" value="3.24.2"/>
+			<attribute name="maven.scope" value="test"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.projectlombok"/>
+			<attribute name="maven.artifactId" value="lombok"/>
+			<attribute name="maven.version" value="1.18.30"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.optionaldependency" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/spring-context/6.1.1/spring-context-6.1.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/spring-context/6.1.1/spring-context-6.1.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework"/>
+			<attribute name="maven.artifactId" value="spring-context"/>
+			<attribute name="maven.version" value="6.1.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-config/6.2.0/spring-security-config-6.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-config/6.2.0/spring-security-config-6.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.security"/>
+			<attribute name="maven.artifactId" value="spring-security-config"/>
+			<attribute name="maven.version" value="6.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-core/6.2.0/spring-security-core-6.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-core/6.2.0/spring-security-core-6.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.security"/>
+			<attribute name="maven.artifactId" value="spring-security-core"/>
+			<attribute name="maven.version" value="6.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-crypto/6.2.0/spring-security-crypto-6.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-crypto/6.2.0/spring-security-crypto-6.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.security"/>
+			<attribute name="maven.artifactId" value="spring-security-crypto"/>
+			<attribute name="maven.version" value="6.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-web/6.2.0/spring-security-web-6.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/security/spring-security-web/6.2.0/spring-security-web-6.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.security"/>
+			<attribute name="maven.artifactId" value="spring-security-web"/>
+			<attribute name="maven.version" value="6.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/spring-web/6.1.1/spring-web-6.1.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/spring-web/6.1.1/spring-web-6.1.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework"/>
+			<attribute name="maven.artifactId" value="spring-web"/>
+			<attribute name="maven.version" value="6.1.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/spring-webmvc/6.1.1/spring-webmvc-6.1.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/spring-webmvc/6.1.1/spring-webmvc-6.1.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework"/>
+			<attribute name="maven.artifactId" value="spring-webmvc"/>
+			<attribute name="maven.version" value="6.1.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.15.3/jackson-databind-2.15.3.jar" sourcepath="C:/Users/lucaf/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.15.3/jackson-databind-2.15.3-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="com.fasterxml.jackson.core"/>
+			<attribute name="maven.artifactId" value="jackson-databind"/>
+			<attribute name="maven.version" value="2.15.3"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.16/tomcat-embed-core-10.1.16.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/apache/tomcat/embed/tomcat-embed-core/10.1.16/tomcat-embed-core-10.1.16-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.apache.tomcat.embed"/>
+			<attribute name="maven.artifactId" value="tomcat-embed-core"/>
+			<attribute name="maven.version" value="10.1.16"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/spring-core/6.1.1/spring-core-6.1.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/spring-core/6.1.1/spring-core-6.1.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework"/>
+			<attribute name="maven.artifactId" value="spring-core"/>
+			<attribute name="maven.version" value="6.1.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.5/jjwt-api-0.11.5.jar" sourcepath="C:/Users/lucaf/.m2/repository/io/jsonwebtoken/jjwt-api/0.11.5/jjwt-api-0.11.5-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="io.jsonwebtoken"/>
+			<attribute name="maven.artifactId" value="jjwt-api"/>
+			<attribute name="maven.version" value="0.11.5"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/spring-beans/6.1.1/spring-beans-6.1.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/spring-beans/6.1.1/spring-beans-6.1.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework"/>
+			<attribute name="maven.artifactId" value="spring-beans"/>
+			<attribute name="maven.version" value="6.1.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.15.3/jackson-annotations-2.15.3.jar" sourcepath="C:/Users/lucaf/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.15.3/jackson-annotations-2.15.3-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="com.fasterxml.jackson.core"/>
+			<attribute name="maven.artifactId" value="jackson-annotations"/>
+			<attribute name="maven.version" value="2.15.3"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/spring-context-support/6.1.1/spring-context-support-6.1.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/spring-context-support/6.1.1/spring-context-support-6.1.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework"/>
+			<attribute name="maven.artifactId" value="spring-context-support"/>
+			<attribute name="maven.version" value="6.1.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/thymeleaf/thymeleaf/3.1.3.RELEASE/thymeleaf-3.1.3.RELEASE.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/thymeleaf/thymeleaf/3.1.3.RELEASE/thymeleaf-3.1.3.RELEASE-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.thymeleaf"/>
+			<attribute name="maven.artifactId" value="thymeleaf"/>
+			<attribute name="maven.version" value="3.1.3.RELEASE"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/eclipse/angus/jakarta.mail/2.0.2/jakarta.mail-2.0.2.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/eclipse/angus/jakarta.mail/2.0.2/jakarta.mail-2.0.2-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.eclipse.angus"/>
+			<attribute name="maven.artifactId" value="jakarta.mail"/>
+			<attribute name="maven.version" value="2.0.2"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/data/spring-data-commons/3.2.0/spring-data-commons-3.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/data/spring-data-commons/3.2.0/spring-data-commons-3.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework.data"/>
+			<attribute name="maven.artifactId" value="spring-data-commons"/>
+			<attribute name="maven.version" value="3.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/springframework/spring-tx/6.1.1/spring-tx-6.1.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/springframework/spring-tx/6.1.1/spring-tx-6.1.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.springframework"/>
+			<attribute name="maven.artifactId" value="spring-tx"/>
+			<attribute name="maven.version" value="6.1.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1.jar" sourcepath="C:/Users/lucaf/.m2/repository/jakarta/transaction/jakarta.transaction-api/2.0.1/jakarta.transaction-api-2.0.1-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="jakarta.transaction"/>
+			<attribute name="maven.artifactId" value="jakarta.transaction-api"/>
+			<attribute name="maven.version" value="2.0.1"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/modelmapper/modelmapper/3.2.0/modelmapper-3.2.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/modelmapper/modelmapper/3.2.0/modelmapper-3.2.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.modelmapper"/>
+			<attribute name="maven.artifactId" value="modelmapper"/>
+			<attribute name="maven.version" value="3.2.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar" sourcepath="C:/Users/lucaf/.m2/repository/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="jakarta.validation"/>
+			<attribute name="maven.artifactId" value="jakarta.validation-api"/>
+			<attribute name="maven.version" value="3.0.2"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/io/grpc/grpc-stub/1.58.0/grpc-stub-1.58.0.jar" sourcepath="C:/Users/lucaf/.m2/repository/io/grpc/grpc-stub/1.58.0/grpc-stub-1.58.0-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="io.grpc"/>
+			<attribute name="maven.artifactId" value="grpc-stub"/>
+			<attribute name="maven.version" value="1.58.0"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/net/devh/grpc-server-spring-boot-autoconfigure/2.15.0.RELEASE/grpc-server-spring-boot-autoconfigure-2.15.0.RELEASE.jar" sourcepath="C:/Users/lucaf/.m2/repository/net/devh/grpc-server-spring-boot-autoconfigure/2.15.0.RELEASE/grpc-server-spring-boot-autoconfigure-2.15.0.RELEASE-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="net.devh"/>
+			<attribute name="maven.artifactId" value="grpc-server-spring-boot-autoconfigure"/>
+			<attribute name="maven.version" value="2.15.0.RELEASE"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/hibernate/orm/hibernate-core/6.3.1.Final/hibernate-core-6.3.1.Final.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/hibernate/orm/hibernate-core/6.3.1.Final/hibernate-core-6.3.1.Final-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.hibernate.orm"/>
+			<attribute name="maven.artifactId" value="hibernate-core"/>
+			<attribute name="maven.version" value="6.3.1.Final"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/lucaf/.m2/repository/org/hibernate/orm/hibernate-core/6.6.22.Final/hibernate-core-6.6.22.Final.jar" sourcepath="C:/Users/lucaf/.m2/repository/org/hibernate/orm/hibernate-core/6.6.22.Final/hibernate-core-6.6.22.Final-sources.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.hibernate.orm"/>
+			<attribute name="maven.artifactId" value="hibernate-core"/>
+			<attribute name="maven.version" value="6.6.22.Final"/>
+			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="src" path="/user-service"/>
+	<classpathentry kind="lib" path="C:/libs/slf4j-api-1.7.36.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

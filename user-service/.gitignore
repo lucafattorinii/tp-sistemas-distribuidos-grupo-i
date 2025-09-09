@@ -1,0 +1,54 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing-maven-plugin-*.json
+.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+*.class
+
+# Eclipse
+.settings/
+.classpath
+.project
+
+# VS Code
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sql
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Build
+target/
+build/
+
+# Application properties with sensitive data
+src/main/resources/application-*.properties
+!src/main/resources/application.properties
+
+# Maven wrapper
+dist/
+.mvn/wrapper/maven-wrapper.jar
+
+# Local development files
+.env
+*.env.local

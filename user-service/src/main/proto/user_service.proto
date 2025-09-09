@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package empuje.users;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+option java_multiple_files = true;
+option java_package = "com.empuje.userservice.grpc.gen";
+option java_outer_classname = "UserServiceProto";
+
+// Servicio para la gestión de usuarios y autenticación
+service UserService {
+  // Crea un nuevo usuario
+  rpc CreateUser (CreateUserRequest) returns (UserResponse) {}
+  
+  // Obtiene un usuario por su ID
+  rpc GetUser (GetUserRequest) returns (UserResponse) {}
+  
+  // Lista usuarios con paginación
+  rpc ListUsers (ListUsersRequest) returns (stream UserResponse) {}
+  
+  // Actualiza un usuario existente
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse) {}
+  
+  // Elimina un usuario
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty) {}
+  
+  // Autentica un usuario y devuelve un token JWT
+  rpc Login (LoginRequest) returns (LoginResponse) {}
+  
+  // Verifica si un nombre de usuario está disponible
+  rpc CheckUsername (CheckUsernameRequest) returns (CheckAvailabilityResponse) {}
+  
+  // Verifica si un correo electrónico está disponible
+  rpc CheckEmail (CheckEmailRequest) returns (CheckAvailabilityResponse) {}
+}
+
+// Mensaje de solicitud para crear un usuario
+message CreateUserRequest {
+  string username = 1;      // Nombre de usuario único
+  string email = 2;         // Correo electrónico del usuario
+  string password = 3;      // Contraseña del usuario
+  string role = 4;          // Nombre del rol (ej: ROLE_ADMIN, ROLE_VOLUNTARIO, ROLE_DONANTE)
+  string first_name = 5;    // Nombre del usuario
+  string last_name = 6;     // Apellido del usuario
+  string phone = 7;         // Teléfono del usuario (opcional)
+  string address = 8;       // Dirección del usuario (opcional)
+  string profile_image = 9; // URL de la imagen de perfil (opcional)
+}
+
+// Mensaje de solicitud para obtener un usuario
+message GetUserRequest {
+  int64 id = 1;  // ID único del usuario
+}
+
+// Mensaje de solicitud para listar usuarios
+message ListUsersRequest {
+  int32 page = 1;  // Número de página (comienza en 0)
+  int32 size = 2;  // Tamaño de la página
+  string sort_by = 3;  // Campo por el que ordenar (opcional)
+  bool ascending = 4;  // Orden ascendente (true) o descendente (false)
+}
+
+// Mensaje de solicitud para actualizar un usuario
+message UpdateUserRequest {
+  int64 id = 1;           // ID del usuario a actualizar
+  string username = 2;     // Nuevo nombre de usuario (opcional)
+  string email = 3;        // Nuevo correo electrónico (opcional)
+  string password = 4;     // Nueva contraseña (opcional)
+  string role = 5;         // Nuevo rol (opcional)
+  string first_name = 6;   // Nuevo nombre (opcional)
+  string last_name = 7;    // Nuevo apellido (opcional)
+  string phone = 8;        // Nuevo teléfono (opcional)
+  string address = 9;      // Nueva dirección (opcional)
+  bool is_active = 10;     // Nuevo estado de la cuenta (opcional)
+}
+
+// Mensaje de solicitud para eliminar un usuario
+message DeleteUserRequest {
+  int64 id = 1;  // ID del usuario a eliminar
+}
+
+// Mensaje de solicitud para autenticación
+message LoginRequest {
+  string username = 1;  // Nombre de usuario
+  string password = 2;  // Contraseña
+}
+
+// Mensaje de respuesta para autenticación exitosa
+message LoginResponse {
+  string token = 1;           // Token JWT para autenticación
+  UserResponse user = 2;      // Información del usuario autenticado
+  int64 expires_in = 3;       // Tiempo de expiración del token en segundos
+  string token_type = 4;      // Tipo de token (ej: Bearer)
+}
+
+// Mensaje de solicitud para verificar disponibilidad de nombre de usuario
+message CheckUsernameRequest {
+  string username = 1;  // Nombre de usuario a verificar
+}
+
+// Mensaje de solicitud para verificar disponibilidad de correo electrónico
+message CheckEmailRequest {
+  string email = 1;  // Correo electrónico a verificar
+}
+
+// Mensaje de respuesta para verificación de disponibilidad
+message CheckAvailabilityResponse {
+  bool available = 1;  // Indica si el recurso está disponible
+  string message = 2;  // Mensaje descriptivo (opcional)
+}
+
+// Mensaje de respuesta para operaciones de usuario
+message UserResponse {
+  int64 id = 1;                    // ID único del usuario
+  string username = 2;             // Nombre de usuario
+  string email = 3;                // Correo electrónico
+  RoleResponse role = 4;           // Información del rol
+  string first_name = 5;           // Nombre del usuario
+  string last_name = 6;            // Apellido del usuario
+  string phone = 7;                // Teléfono (opcional)
+  string address = 8;              // Dirección (opcional)
+  string profile_image = 9;        // URL de la imagen de perfil (opcional)
+  bool is_active = 10;             // Estado de la cuenta
+  bool email_verified = 11;        // Si el correo electrónico está verificado
+  google.protobuf.Timestamp created_at = 12;  // Fecha de creación
+  google.protobuf.Timestamp updated_at = 13;  // Fecha de última actualización
+  google.protobuf.Timestamp last_login = 14;  // Último inicio de sesión
+}
+
+// Mensaje de respuesta para información de rol
+message RoleResponse {
+  int32 id = 1;                    // ID del rol
+  string name = 2;                 // Nombre del rol (ej: ROLE_ADMIN)
+  string description = 3;          // Descripción del rol
+  map<string, string> permissions = 4;  // Permisos del rol
+  bool is_active = 5;              // Estado del rol
+}
+
+// Definición de roles del sistema
+enum SystemRole {
+  ROLE_UNSPECIFIED = 0;    // Rol no especificado
+  ROLE_ADMIN = 1;          // Administrador del sistema
+  ROLE_VOLUNTARIO = 2;     // Voluntario
+  ROLE_DONANTE = 3;        // Donante
+}
+
+// Mensaje para manejar respuestas genéricas
+message GenericResponse {
+  bool success = 1;        // Indica si la operación fue exitosa
+  string message = 2;      // Mensaje descriptivo
+  string error_code = 3;   // Código de error (opcional)
+  map<string, string> metadata = 4;  // Metadatos adicionales
+}

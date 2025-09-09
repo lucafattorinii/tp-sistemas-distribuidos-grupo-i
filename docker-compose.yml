@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # Database
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: empuje
+      MYSQL_USER: empuje
+      MYSQL_PASSWORD: empuje
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/empuje?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: empuje
+      SPRING_DATASOURCE_PASSWORD: empuje
+      SERVER_PORT: 50051
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "50051:50051"
+    networks:
+      - empuje-network
+
+  # Inventory Service
+  inventory-service:
+    build:
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/empuje?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: empuje
+      SPRING_DATASOURCE_PASSWORD: empuje
+      SERVER_PORT: 50052
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "50052:50052"
+    networks:
+      - empuje-network
+
+  # Event Service
+  event-service:
+    build:
+      context: ./event-service
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/empuje?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: empuje
+      SPRING_DATASOURCE_PASSWORD: empuje
+      SERVER_PORT: 50053
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "50053:50053"
+    networks:
+      - empuje-network
+
+  # API Gateway
+  gateway:
+    build:
+      context: ./gateway-fastapi
+      dockerfile: Dockerfile
+    environment:
+      USER_SERVICE_URL: user-service:50051
+      INVENTORY_SERVICE_URL: inventory-service:50052
+      EVENT_SERVICE_URL: event-service:50053
+      JWT_SECRET: your_jwt_secret_key_here
+    ports:
+      - "8000:8000"
+    depends_on:
+      - user-service
+      - inventory-service
+      - event-service
+    networks:
+      - empuje-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend-thymeleaf
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      API_GATEWAY_URL: http://gateway:8000
+    depends_on:
+      - gateway
+    networks:
+      - empuje-network
+
+networks:
+  empuje-network:
+    driver: bridge
+
+volumes:
+  db_data:
