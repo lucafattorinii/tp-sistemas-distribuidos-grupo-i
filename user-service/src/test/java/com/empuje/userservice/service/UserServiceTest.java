@@ -2,7 +2,7 @@ package com.empuje.userservice.service;
 
 import com.empuje.userservice.dto.UserDto;
 import com.empuje.userservice.exception.ResourceNotFoundException;
-import com.empuje.userservice.model.Role;
+import com.empuje.userservice.grpc.gen.SystemRole;
 import com.empuje.userservice.model.User;
 import com.empuje.userservice.repository.RoleRepository;
 import com.empuje.userservice.repository.UserRepository;
@@ -27,9 +27,6 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private RoleRepository roleRepository;
-
-    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -40,38 +37,36 @@ class UserServiceTest {
 
     private User testUser;
     private UserDto testUserDto;
-    private Role testRole;
+    private SystemRole testRole;
 
     @BeforeEach
     void setUp() {
-        testRole = new Role();
-        testRole.setId(1L);
-        testRole.setName("USER");
+        testRole = SystemRole.ROLE_DONANTE;
         
         testUser = new User();
         testUser.setId(1L);
         testUser.setUsername("testuser");
         testUser.setEmail("test@example.com");
-        testUser.setPassword("encodedpassword");
+        testUser.setPassword("password");
         testUser.setRole(testRole);
+        testUser.setActive(true);
         
         testUserDto = new UserDto();
         testUserDto.setUsername("testuser");
         testUserDto.setEmail("test@example.com");
         testUserDto.setPassword("password123");
-        testUserDto.setRoleId(1L);
+        testUserDto.setRole(testRole);
     }
 
     @Test
     void createUser_ShouldSaveUserAndSendEmail() {
         // Arrange
-        when(roleRepository.findById(1L)).thenReturn(Optional.of(testRole));
         when(passwordEncoder.encode(anyString())).thenReturn("encodedpassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
-        doNothing().when(emailService).sendWelcomeEmail(anyString(), anyString());
+        doNothing().when(emailService).sendUserRegistrationEmail(any(User.class), anyString());
 
         // Act
-        UserDto result = userService.createUser(testUserDto);
+        UserDto result = userService.createUser(testUserDto, 1L); // 1L is the ID of the user creating this user
 
         // Assert
         assertNotNull(result);
@@ -79,7 +74,7 @@ class UserServiceTest {
         assertEquals(testUser.getEmail(), result.getEmail());
         
         verify(userRepository, times(1)).save(any(User.class));
-        verify(emailService, times(1)).sendWelcomeEmail(anyString(), anyString());
+        verify(emailService, times(1)).sendUserRegistrationEmail(any(User.class), anyString());
     }
 
     @Test
@@ -115,12 +110,19 @@ class UserServiceTest {
         UserDto updateDto = new UserDto();
         updateDto.setUsername("updateduser");
         updateDto.setEmail("updated@example.com");
+        updateDto.setRole(SystemRole.ROLE_DONANTE);
+        
+        User updatedUser = new User();
+        updatedUser.setId(1L);
+        updatedUser.setUsername("updateduser");
+        updatedUser.setEmail("updated@example.com");
+        updatedUser.setRole(SystemRole.ROLE_DONANTE);
         
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(userRepository.save(any(User.class))).thenReturn(updatedUser);
 
         // Act
-        UserDto result = userService.updateUser(1L, updateDto);
+        UserDto result = userService.updateUser(1L, updateDto, 2L); // 2L is the ID of the user making the update
 
         // Assert
         assertNotNull(result);
@@ -138,7 +140,7 @@ class UserServiceTest {
         doNothing().when(userRepository).deleteById(1L);
 
         // Act
-        userService.deleteUser(1L);
+        userService.deleteUser(1L, 3L); // 3L is the ID of the user performing the deletion
 
         // Assert
         verify(userRepository, times(1)).existsById(1L);

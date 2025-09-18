@@ -1,79 +1,55 @@
-package com.empuje.userservice.grpc;
-
-import com.empuje.userservice.dto.UserDto;
-import com.empuje.userservice.exception.ResourceNotFoundException;
-import com.empuje.userservice.model.RoleName;
-import com.empuje.userservice.service.UserService;
-import com.empuje.userservice.grpc.gen.*;
-import com.empuje.userservice.security.JwtTokenProvider;
-import com.google.protobuf.Empty;
-import com.google.protobuf.Timestamp;
-import io.grpc.Status;
-import io.grpc.stub.StreamObserver;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.devh.boot.grpc.server.service.GrpcService;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import static com.empuje.userservice.grpc.gen.UserServiceGrpc.UserServiceImplBase;
-
-/**
- * gRPC service implementation for user management
- */
-/**
- * gRPC service implementation for user management.
- */
-@Slf4j
-@GrpcService
-@Service
-@RequiredArgsConstructor
-public class UserGrpcService extends UserServiceImplBase {
-
-    private static final String TOKEN_TYPE = "Bearer";
-    private static final long TOKEN_EXPIRATION = 86400000; // 24 hours in milliseconds
-    private static final long SYSTEM_USER_ID = 1L; // System user ID for audit fields
-
+// Deprecated reference file. The active gRPC implementation is UserGrpcServiceImpl.
+// This file is intentionally left minimal to avoid IDE parsing errors.
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
+    private final ProtoMapper protoMapper;
 
     @Override
     public void createUser(com.empuje.userservice.grpc.gen.CreateUserRequest request,
-                         io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.UserResponse> responseObserver) {
+                         io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.CreateUserResponse> responseObserver) {
         try {
             // Validate request
-            if (request.getUsername().isEmpty() || request.getEmail().isEmpty() || request.getPassword().isEmpty()) {
+            if (request.getUsername() == null || request.getUsername().isEmpty() || 
+                request.getEmail() == null || request.getEmail().isEmpty() ||
+                request.getPassword() == null || request.getPassword().isEmpty()) {
                 throw new IllegalArgumentException("Username, email and password are required");
             }
+*/
 
             // Map request to DTO
             UserDto userDto = new UserDto();
             userDto.setUsername(request.getUsername());
             userDto.setEmail(request.getEmail());
             userDto.setPassword(passwordEncoder.encode(request.getPassword()));
-            userDto.setFirstName(request.getFirstName());
-            userDto.setLastName(request.getLastName());
-            userDto.setPhone(request.getPhone());
-            userDto.setAddress(request.getAddress());
             
-            // Set default role if not provided
-            String roleName = request.getRole().isEmpty() ? "ROLE_DONANTE" : request.getRole();
-            userDto.setRole(RoleName.valueOf(roleName));
+            // Set optional fields
+            if (request.getFirstName() != null) userDto.setFirstName(request.getFirstName());
+            if (request.getLastName() != null) userDto.setLastName(request.getLastName());
+            if (request.getPhone() != null) userDto.setPhone(request.getPhone());
+            if (request.getAddress() != null) userDto.setAddress(request.getAddress());
+            if (request.getProfileImage() != null) userDto.setProfileImage(request.getProfileImage());
+            
+            // Set role
+            // Set role if provided
+            if (!request.getRole().isEmpty()) {
+                userDto.setRole(SystemRole.valueOf(request.getRole()));
+            } else {
+                // Default role
+                userDto.setRole(SystemRole.ROLE_DONANTE);
+            }
             
             // Create user
             UserDto createdUser = userService.createUser(userDto, SYSTEM_USER_ID);
             
-            // Build and send response
-            responseObserver.onNext(toUserResponse(createdUser));
+            // Build response
+            com.empuje.userservice.grpc.gen.CreateUserResponse response = 
+                com.empuje.userservice.grpc.gen.CreateUserResponse.newBuilder()
+                    .setId(createdUser.getId())
+                    .build();
+            
+            // Send response
+            responseObserver.onNext(response);
             responseObserver.onCompleted();
             
         } catch (IllegalArgumentException e) {
@@ -90,39 +66,22 @@ public class UserGrpcService extends UserServiceImplBase {
     }
 
     @Override
-    public void updateUser(UpdateUserRequest request, StreamObserver<UserResponse> responseObserver) {
+    public void updateUser(com.empuje.userservice.grpc.gen.UpdateUserRequest request,
+                         io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.UserResponse> responseObserver) {
         try {
-            // Map request to DTO
-            UserDto userDto = new UserDto();
-            
-            // Update fields if provided
-            if (request.hasUsername()) userDto.setUsername(request.getUsername());
-            if (request.hasEmail()) userDto.setEmail(request.getEmail());
-            if (request.hasFirstName()) userDto.setFirstName(request.getFirstName());
-            if (request.hasLastName()) userDto.setLastName(request.getLastName());
-            if (request.hasPhone()) userDto.setPhone(request.getPhone());
-            if (request.hasAddress()) userDto.setAddress(request.getAddress());
-            
-            // Update role if provided
-            if (request.hasRole()) {
-                userDto.setRole(RoleName.valueOf(request.getRole()));
-            }
+            // Map request to DTO using ProtoMapper
+            UserDto userDto = protoMapper.toUserDto(request);
             
             // Update password if provided
-            if (request.hasPassword()) {
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
                 userDto.setPassword(passwordEncoder.encode(request.getPassword()));
-            }
-            
-            // Update is_active if provided
-            if (request.hasIsActive()) {
-                userDto.setActive(request.getIsActive());
             }
             
             // Update user
             UserDto updatedUser = userService.updateUser(request.getId(), userDto, SYSTEM_USER_ID);
             
             // Build and send response
-            responseObserver.onNext(toUserResponse(updatedUser));
+            responseObserver.onNext(protoMapper.toUserResponse(updatedUser));
             responseObserver.onCompleted();
             
         } catch (ResourceNotFoundException e) {
@@ -144,18 +103,19 @@ public class UserGrpcService extends UserServiceImplBase {
     }
 
     @Override
-    public void getUser(GetUserRequest request, StreamObserver<UserResponse> responseObserver) {
+    public void getUser(com.empuje.userservice.grpc.gen.GetUserRequest request, 
+                       io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.UserResponse> responseObserver) {
         try {
             if (request.getId() <= 0) {
                 throw new IllegalArgumentException("Invalid user ID");
             }
             
-            Optional<UserDto> userDtoOpt = userService.getUserById(request.getId());
-            if (userDtoOpt.isEmpty()) {
+            try {
+                UserDto userDto = userService.getUserById(request.getId());
+                responseObserver.onNext(toUserResponse(userDto));
+            } catch (ResourceNotFoundException e) {
                 throw new ResourceNotFoundException("User not found with id: " + request.getId());
             }
-            
-            responseObserver.onNext(toUserResponse(userDtoOpt.get()));
             responseObserver.onCompleted();
             
         } catch (ResourceNotFoundException e) {
@@ -177,17 +137,20 @@ public class UserGrpcService extends UserServiceImplBase {
     }
 
     @Override
-    public void listUsers(ListUsersRequest request, StreamObserver<UserResponse> responseObserver) {
+    public void listUsers(com.empuje.userservice.grpc.gen.ListUsersRequest request, 
+                         io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.UserResponse> responseObserver) {
         try {
-            // Convert page to 0-based for Spring Data
-            int page = Math.max(0, request.getPage());
+            // Create Pageable for pagination (convert to 0-based page for Spring Data)
+            int page = Math.max(0, request.getPage() - 1);
             int size = request.getSize() > 0 ? request.getSize() : 10;
+            org.springframework.data.domain.Pageable pageable = 
+                org.springframework.data.domain.PageRequest.of(page, size);
             
             // Get users with pagination
-            List<UserDto> users = userService.getAllUsers(page, size);
+            org.springframework.data.domain.Page<UserDto> usersPage = userService.getAllUsers(pageable);
             
             // Stream responses
-            users.stream()
+            usersPage.getContent().stream()
                 .map(this::toUserResponse)
                 .forEach(responseObserver::onNext);
             
@@ -202,36 +165,58 @@ public class UserGrpcService extends UserServiceImplBase {
     }
 
     @Override
-    public void login(LoginRequest request, StreamObserver<LoginResponse> responseObserver) {
+    public void login(com.empuje.userservice.grpc.gen.LoginRequest request, 
+                     io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.LoginResponse> responseObserver) {
         try {
             // Validate request
-            if (!request.hasUsername() || !request.hasPassword() || 
-                request.getUsername().isEmpty() || request.getPassword().isEmpty()) {
+            if (request.getUsername().isEmpty() || request.getPassword().isEmpty()) {
                 throw new IllegalArgumentException("Username and password are required");
             }
             
-            // Create login request DTO
-            UserDto loginRequest = new UserDto();
-            loginRequest.setUsername(request.getUsername());
+            // Create LoginRequest for authentication
+            com.empuje.userservice.dto.LoginRequest loginRequest = 
+                new com.empuje.userservice.dto.LoginRequest();
+            loginRequest.setUsernameOrEmail(request.getUsername());
             loginRequest.setPassword(request.getPassword());
             
-            // Authenticate user
-            UserDto userDto = userService.authenticateUser(loginRequest)
-                .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
+            // Authenticate user using the service
+            com.empuje.userservice.dto.JwtAuthenticationResponse authResponse = 
+                userService.authenticateUser(loginRequest);
+            
+            // Extract user details from auth response
+            UserDto userDto = authResponse.getUser();
+            String role = userDto.getRole() != null ? userDto.getRole().name() : "USER";
+            
+            // Create user details for token generation
+            org.springframework.security.core.userdetails.User userDetails = 
+                new org.springframework.security.core.userdetails.User(
+                    userDto.getUsername(),
+                    userDto.getPassword(),
+                    true, // enabled
+                    true, // accountNonExpired
+                    true, // credentialsNonExpired
+                    true, // accountNonLocked
+                    List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                );
             
             // Generate JWT token
-            String token = jwtTokenProvider.generateToken(userDto);
+            String token = jwtTokenProvider.generateToken(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities()
+                )
+            );
             
             // Build response
-            UserResponse userResponse = toUserResponse(userDto);
+            com.empuje.userservice.grpc.gen.UserResponse userResponse = toUserResponse(userDto);
             
-            LoginResponse response = LoginResponse.newBuilder()
-                .setToken(token)
-                .setUser(userResponse)
-                .setTokenType(TOKEN_TYPE)
-                .setExpiresIn(TOKEN_EXPIRATION / 1000) // Convert to seconds
-                .build();
-                
+            com.empuje.userservice.grpc.gen.LoginResponse response = 
+                com.empuje.userservice.grpc.gen.LoginResponse.newBuilder()
+                    .setToken(token)
+                    .setUser(userResponse)
+                    .setExpiresIn(TOKEN_EXPIRATION / 1000) // Convert to seconds
+                    .setTokenType(TOKEN_TYPE)
+                    .build();
+                    
             responseObserver.onNext(response);
             responseObserver.onCompleted();
             
@@ -240,22 +225,17 @@ public class UserGrpcService extends UserServiceImplBase {
             responseObserver.onError(Status.UNAUTHENTICATED
                 .withDescription("Invalid username or password")
                 .asRuntimeException());
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid login request: {}", e.getMessage());
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                .withDescription(e.getMessage())
-                .asRuntimeException());
         } catch (Exception e) {
-            log.error("Login error: {}", e.getMessage(), e);
+            log.error("Error during login: {}", e.getMessage(), e);
             responseObserver.onError(Status.INTERNAL
-                .withDescription("An error occurred during login")
+                .withDescription("Error during login: " + e.getMessage())
                 .asRuntimeException());
         }
     }
 
     @Override
     public void checkUsername(com.empuje.userservice.grpc.gen.CheckUsernameRequest request,
-                            io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.CheckUsernameResponse> responseObserver) {
+                            io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.CheckAvailabilityResponse> responseObserver) {
         try {
             // Validate request
             if (request.getUsername().isEmpty()) {
@@ -266,10 +246,10 @@ public class UserGrpcService extends UserServiceImplBase {
             boolean available = !userService.existsByUsername(request.getUsername());
             
             // Build response
-            com.empuje.userservice.grpc.gen.CheckUsernameResponse response = 
-                com.empuje.userservice.grpc.gen.CheckUsernameResponse.newBuilder()
-                    .setAvailable(available)
-                    .build();
+            com.empuje.userservice.grpc.gen.CheckAvailabilityResponse response = com.empuje.userservice.grpc.gen.CheckAvailabilityResponse.newBuilder()
+                .setAvailable(available)
+                .setMessage(available ? "Username is available" : "Username is already taken")
+                .build();
                     
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -300,10 +280,10 @@ public class UserGrpcService extends UserServiceImplBase {
             boolean available = !userService.existsByEmail(request.getEmail());
             
             // Build response
-            com.empuje.userservice.grpc.gen.CheckEmailResponse response = 
-                com.empuje.userservice.grpc.gen.CheckEmailResponse.newBuilder()
-                    .setAvailable(available)
-                    .build();
+            com.empuje.userservice.grpc.gen.CheckEmailResponse response = com.empuje.userservice.grpc.gen.CheckEmailResponse.newBuilder()
+                .setAvailable(available)
+                .setMessage(available ? "Email is available" : "Email is already registered")
+                .build();
                     
             responseObserver.onNext(response);
             responseObserver.onCompleted();
@@ -323,7 +303,7 @@ public class UserGrpcService extends UserServiceImplBase {
     
     @Override
     public void deleteUser(com.empuje.userservice.grpc.gen.DeleteUserRequest request,
-                         io.grpc.stub.StreamObserver<com.empuje.userservice.grpc.gen.DeleteUserResponse> responseObserver) {
+                         io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
         try {
             // Validate request
             if (request.getId() <= 0) {
@@ -333,8 +313,8 @@ public class UserGrpcService extends UserServiceImplBase {
             // Delete user
             userService.deleteUser(request.getId(), SYSTEM_USER_ID);
             
-            // Build and send response
-            responseObserver.onNext(com.empuje.userservice.grpc.gen.DeleteUserResponse.newBuilder().build());
+            // Send empty response as defined in the proto
+            responseObserver.onNext(com.google.protobuf.Empty.newBuilder().build());
             responseObserver.onCompleted();
             
         } catch (ResourceNotFoundException e) {
@@ -353,5 +333,12 @@ public class UserGrpcService extends UserServiceImplBase {
                 .withDescription("Error deleting user: " + e.getMessage())
                 .asRuntimeException());
         }
+    }
+    
+    /**
+     * Converts a UserDto to a UserResponse protobuf message
+     */
+    private com.empuje.userservice.grpc.gen.UserResponse toUserResponse(UserDto userDto) {
+        return protoMapper.toUserResponse(userDto);
     }
 }

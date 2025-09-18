@@ -1,56 +1,56 @@
 package com.empuje.userservice.util;
 
 import com.empuje.userservice.dto.UserDto;
-import com.empuje.userservice.model.Role;
-import com.empuje.userservice.model.RoleName;
+import com.empuje.userservice.grpc.gen.SystemRole;
+// Role import removed as we're using SystemRole directly
 import com.empuje.userservice.model.User;
 import com.empuje.userservice.grpc.gen.*;
 import com.google.protobuf.Timestamp;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.util.stream.Collectors;
-
+/**
+ * Mapper utility for converting between Protobuf messages and domain objects.
+ */
 @Slf4j
 @Component
 public class ProtoMapper {
 
     /**
-     * Convierte el modelo de dominio User a UserResponse de gRPC con manejo adecuado de RoleResponse y Timestamp
+     * Convierte UserDto a UserResponse con manejo adecuado de RoleResponse y Timestamp
      */
-    public UserResponse toUserResponse(User user) {
-        if (user == null) {
+    public static UserResponse toUserResponse(UserDto userDto) {
+        if (userDto == null) {
             return null;
         }
         
         UserResponse.Builder builder = UserResponse.newBuilder()
-                .setId(user.getId())
-                .setUsername(user.getUsername() != null ? user.getUsername() : "")
-                .setEmail(user.getEmail() != null ? user.getEmail() : "")
-                .setFirstName(user.getFirstName() != null ? user.getFirstName() : "")
-                .setLastName(user.getLastName() != null ? user.getLastName() : "")
-                .setDni(user.getDni() != null ? user.getDni() : "")
-                .setPhone(user.getPhone() != null ? user.getPhone() : "")
-                .setAddress(user.getAddress() != null ? user.getAddress() : "")
-                .setActive(user.isActive());
-                
+                .setId(userDto.getId() != null ? userDto.getId() : 0)
+                .setUsername(userDto.getUsername() != null ? userDto.getUsername() : "")
+                .setEmail(userDto.getEmail() != null ? userDto.getEmail() : "")
+                .setFirstName(userDto.getFirstName() != null ? userDto.getFirstName() : "")
+                .setLastName(userDto.getLastName() != null ? userDto.getLastName() : "")
+                .setPhone(safeGetString(userDto.getPhone()))
+                .setAddress(safeGetString(userDto.getAddress()))
+                .setIsActive(userDto.isActive())
+                .setEmailVerified(userDto.isEmailVerified());
+        
         // Mapeo del Rol
-        if (user.getRole() != null) {
-            builder.setRole(buildRoleResponse(user.getRole()));
+        if (userDto.getRole() != null) {
+            builder.setRole(buildRoleResponse(userDto.getRole()));
         }
         
- // Manejo de marcas de tiempo
-        if (user.getCreatedAt() != null) {
-            builder.setCreatedAt(toTimestamp(user.getCreatedAt()));
-        }
-        
-        if (user.getUpdatedAt() != null) {
-            builder.setUpdatedAt(toTimestamp(user.getUpdatedAt()));
-        }
-        
-        if (user.getLastLogin() != null) {
-            builder.setLastLogin(toTimestamp(user.getLastLogin()));
+        // Manejo de marcas de tiempo
+        // Handle last login if present
+        if (userDto.getLastLogin() != null) {
+            builder.setLastLogin(toTimestamp(userDto.getLastLogin()));
         }
         
         return builder.build();
@@ -60,28 +60,31 @@ public class ProtoMapper {
      * Convierte CreateUserRequest a UserDto con validación segura del rol
      */
     public UserDto toUserDto(CreateUserRequest request) {
-        RoleName role = RoleName.ROLE_DONANTE; // Rol por defecto
+        Objects.requireNonNull(request, "CreateUserRequest cannot be null");
         
-        // Parseo seguro del rol
-        if (request.hasRole() && !request.getRole().isEmpty()) {
+        SystemRole role = SystemRole.VOLUNTARIO; // Default role per TP
+        
+        // Safe role parsing
+        String roleStr = request.getRole();
+        if (roleStr != null && !roleStr.isEmpty()) {
             try {
-                role = RoleName.valueOf(request.getRole().toUpperCase());
+                role = SystemRole.valueOf(roleStr.toUpperCase());
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid role provided: {}. Using default role: {}", 
-                        request.getRole(), role);
+                        roleStr, role);
             }
         }
         
         return UserDto.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .firstName(request.hasFirstName() ? request.getFirstName() : "")
-                .lastName(request.hasLastName() ? request.getLastName() : "")
-                .dni(request.hasDni() ? request.getDni() : "")
-                .phone(request.hasPhone() ? request.getPhone() : "")
-                .address(request.hasAddress() ? request.getAddress() : "")
+                .username(safeGetString(request.getUsername()))
+                .email(safeGetString(request.getEmail()))
+                .firstName(safeGetString(request.getFirstName()))
+                .lastName(safeGetString(request.getLastName()))
+                .dni("") // DNI not in CreateUserRequest
+                .phone(safeGetString(request.getPhone()))
+                .address(safeGetString(request.getAddress()))
                 .role(role)
-                .active(true) // Los nuevos usuarios están activos por defecto
+                .active(true) // New users are active by default
                 .build();
     }
 
@@ -89,72 +92,82 @@ public class ProtoMapper {
      * Convierte UpdateUserRequest a UserDto con validación segura del rol
      */
     public UserDto toUserDto(UpdateUserRequest request) {
-        RoleName role = RoleName.ROLE_DONANTE; // Rol por defecto
+        Objects.requireNonNull(request, "UpdateUserRequest cannot be null");
         
-        // Parseo seguro del rol
-        if (request.hasRole() && !request.getRole().isEmpty()) {
-            try {
-                role = RoleName.valueOf(request.getRole().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                log.warn("Invalid role provided: {}. Using default role: {}", 
-                        request.getRole(), role);
-            }
-        }
-        
-        return UserDto.builder()
+        UserDto.UserDtoBuilder builder = UserDto.builder()
                 .id(request.getId())
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .firstName(request.hasFirstName() ? request.getFirstName() : "")
-                .lastName(request.hasLastName() ? request.getLastName() : "")
-                .dni(request.hasDni() ? request.getDni() : "")
-                .phone(request.hasPhone() ? request.getPhone() : "")
-                .address(request.hasAddress() ? request.getAddress() : "")
-                .role(role)
-                .active(request.getActive())
-                .build();
-    }
-
-    /**
-     * Convierte UserDto a UserResponse con manejo adecuado de RoleResponse y Timestamp
-     */
-    public UserResponse toUserResponse(UserDto userDto) {
-        if (userDto == null) {
-            return null;
-        }
+                .active(request.getIsActive());
         
-        UserResponse.Builder builder = UserResponse.newBuilder()
-                .setId(userDto.getId())
-                .setUsername(userDto.getUsername() != null ? userDto.getUsername() : "")
-                .setEmail(userDto.getEmail() != null ? userDto.getEmail() : "")
-                .setFirstName(userDto.getFirstName() != null ? userDto.getFirstName() : "")
-                .setLastName(userDto.getLastName() != null ? userDto.getLastName() : "")
-                .setDni(userDto.getDni() != null ? userDto.getDni() : "")
-                .setPhone(userDto.getPhone() != null ? userDto.getPhone() : "")
-                .setAddress(userDto.getAddress() != null ? userDto.getAddress() : "")
-                .setActive(userDto.isActive());
+        // Set fields only if they are not null or empty
+        if (request.getUsername() != null) builder.username(request.getUsername());
+        if (request.getEmail() != null) builder.email(request.getEmail());
+        if (request.getFirstName() != null) builder.firstName(request.getFirstName());
+        if (request.getLastName() != null) builder.lastName(request.getLastName());
+        if (request.getPhone() != null) builder.phone(request.getPhone());
+        if (request.getAddress() != null) builder.address(request.getAddress());
         
-        // Mapeo del Rol
-        if (userDto.getRole() != null) {
-            builder.setRole(RoleResponse.newBuilder()
-                    .setName(userDto.getRole().name())
-                    .setIsActive(true)
-                    .build());
-        }
-        
- // Manejo de marcas de tiempo
-        if (userDto.getCreatedAt() != null) {
-            builder.setCreatedAt(toTimestamp(userDto.getCreatedAt()));
-        }
-        
-        if (userDto.getUpdatedAt() != null) {
-            builder.setUpdatedAt(toTimestamp(userDto.getUpdatedAt()));
-        }
-        
-        if (userDto.getLastLogin() != null) {
-            builder.setLastLogin(toTimestamp(userDto.getLastLogin()));
+        // Handle role if provided
+        if (request.getRole() != null && !request.getRole().isEmpty()) {
+            try {
+                SystemRole role = SystemRole.valueOf(request.getRole().toUpperCase());
+                builder.role(role);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid role provided in UpdateUserRequest: {}", request.getRole(), e);
+            }
         }
         
         return builder.build();
     }
+
+    /**
+     * Builds a RoleResponse from a SystemRole enum
+     */
+    private static RoleResponse buildRoleResponse(SystemRole systemRole) {
+        if (systemRole == null) {
+            return RoleResponse.newBuilder()
+                    .setName("")
+                    .build();
+        }
+        
+        return RoleResponse.newBuilder()
+                .setId(systemRole.getNumber())
+                .setName(systemRole.name())
+                .build();
+    }
+    
+    /**
+     * Convierte un LocalDateTime a Timestamp de protobuf
+     */
+    public static Timestamp toTimestamp(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        Instant instant = dateTime.atZone(ZoneId.systemDefault()).toInstant();
+        return Timestamp.newBuilder()
+                .setSeconds(instant.getEpochSecond())
+                .setNanos(instant.getNano())
+                .build();
+    }
+    
+    /**
+     * Convierte un Instant a Timestamp de protobuf
+     */
+    public static Timestamp toTimestamp(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return Timestamp.newBuilder()
+                .setSeconds(instant.getEpochSecond())
+                .setNanos(instant.getNano())
+                .build();
+    }
+    
+    /**
+     * Safely gets a string value, returning empty string if null
+     */
+    private static String safeGetString(String value) {
+        return value != null ? value : "";
+    }
+    
+    // Helper methods are now inlined where needed
 }

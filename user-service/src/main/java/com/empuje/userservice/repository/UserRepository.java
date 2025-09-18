@@ -1,6 +1,6 @@
 package com.empuje.userservice.repository;
 
-import com.empuje.userservice.model.Role;
+import com.empuje.userservice.grpc.gen.SystemRole;
 import com.empuje.userservice.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,16 +23,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     boolean existsByEmail(String email);
     
+    boolean existsByEmailAndIdNot(String email, Long id);
+    
     @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.username = :identifier")
     Optional<User> findByUsernameOrEmail(@Param("identifier") String identifier);
     
     Page<User> findAll(Pageable pageable);
     
-    List<User> findByRole(Role role);
+    List<User> findByRole(SystemRole role);
     
     @Query("SELECT u FROM User u WHERE u.active = :active")
     Page<User> findByActive(@Param("active") boolean active, Pageable pageable);
-    
-    @Query("SELECT u FROM User u WHERE u.role.name = :roleName")
-    List<User> findByRoleName(@Param("roleName") Role.RoleName roleName);
 }

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventario - Empuje Comunitario</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background: #0b1020; color: #e6e9ef; margin:0; }
+    header { padding: 16px 24px; border-bottom: 1px solid #223058; }
+    header h1 { margin: 0; font-size: 18px; color:#d6dcff; }
+    .wrap { padding: 24px; max-width: 1000px; margin: 0 auto; }
+    .card { background:#11162a; border:1px solid #253055; border-radius:14px; padding:20px; margin-bottom:20px; }
+    h2 { margin: 0 0 12px; font-size: 16px; color:#d6dcff; }
+    label { display:block; font-size:13px; margin:10px 0 6px; color:#ced5f3; }
+    input, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2b3560; background:#0c1328; color:#f2f5ff; outline:none; }
+    input:focus, select:focus { border-color:#4f66ff; box-shadow:0 0 0 3px rgba(79,102,255,.15); }
+    .row { display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    button { padding:10px 14px; border:0; border-radius:10px; background:#4f66ff; color:#fff; font-weight:600; cursor:pointer; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { text-align:left; padding:10px; border-bottom:1px solid #223058; font-size:14px; }
+    th { color:#aab3d3; font-weight:600; }
+    .toolbar { display:flex; justify-content: space-between; align-items:center; margin-bottom:10px; }
+    .muted { color:#9fb0e5; font-size:12px; margin-top:8px; }
+    .danger { background:#d9534f; }
+    .secondary { background:#2d3a6b; }
+  </style>
+</head>
+<body>
+<header style="display:flex;justify-content:space-between;align-items:center;">
+  <h1>Inventario</h1>
+  <nav style="display:flex;gap:10px;align-items:center;">
+    <a href="/users" style="color:#d6dcff;text-decoration:none;">Usuarios</a>
+    <a href="/inventory" style="color:#d6dcff;text-decoration:none;">Inventario</a>
+    <a href="/events" style="color:#d6dcff;text-decoration:none;">Eventos</a>
+    <button class="secondary" onclick="logout()">Salir</button>
+  </nav>
+</header>
+<div class="wrap">
+  <div class="card">
+    <h2>Nuevo ítem</h2>
+    <div class="row">
+      <div>
+        <label>Categoría</label>
+        <select id="i_cat">
+          <option value="ALIMENTOS">ALIMENTOS</option>
+          <option value="ROPA">ROPA</option>
+          <option value="JUGUETES">JUGUETES</option>
+          <option value="UTILES_ESCOLARES">UTILES_ESCOLARES</option>
+        </select>
+      </div>
+      <div>
+        <label>Descripción</label>
+        <input id="i_desc" placeholder="Ej. remeras">
+      </div>
+      <div>
+        <label>Cantidad</label>
+        <input id="i_qty" type="number" value="0">
+      </div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:10px;">
+      <button onclick="createItem()">Agregar</button>
+      <span id="create_msg" class="muted"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <h2>Listado</h2>
+      <button class="secondary" onclick="loadItems()">Refrescar</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Categoría</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="inv_tbody"></tbody>
+    </table>
+    <div id="list_msg" class="muted"></div>
+  </div>
+</div>
+<script>
+  const API_BASE = '';
+  function authHeader(){
+    const jwt = localStorage.getItem('jwt');
+    return jwt ? { 'Authorization': 'Bearer ' + jwt } : {};
+  }
+  function handle401(res){ if(res.status===401){ window.location.href='/'; return true;} return false; }
+  function logout(){ localStorage.removeItem('jwt'); window.location.href='/'; }
+  async function createItem(){
+    const body = {
+      category: document.getElementById('i_cat').value,
+      description: document.getElementById('i_desc').value,
+      quantity: parseInt(document.getElementById('i_qty').value||'0',10)
+    };
+    const msg = document.getElementById('create_msg');
+    msg.textContent = 'Agregando...';
+    try{
+      const res = await fetch(API_BASE + '/api/inventory', {
+        method:'POST', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify(body)
+      });
+      if(handle401(res)) return;
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.detail || 'Error al agregar');
+      msg.textContent = 'Agregado ID ' + data.id;
+      loadItems();
+    }catch(err){ msg.textContent = err.message; }
+  }
+  async function loadItems(){
+    const tbody = document.getElementById('inv_tbody');
+    const msg = document.getElementById('list_msg');
+    msg.textContent = 'Cargando...';
+    tbody.innerHTML = '';
+    try{
+      const res = await fetch(API_BASE + '/api/inventory', { headers: { ...authHeader() } });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.detail || 'Error al listar');
+      (data.items || []).forEach(it => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${it.id}</td><td>${it.category}</td><td>${it.description}</td><td>${it.quantity}</td>
+          <td>
+            <button class="secondary" onclick="adjust(${it.id},1)">+1</button>
+            <button class="secondary" onclick="adjust(${it.id},-1)">-1</button>
+            <button class="danger" onclick="del(${it.id})">Borrar</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+      msg.textContent='';
+    }catch(err){ msg.textContent = err.message; }
+  }
+  async function adjust(id,delta){
+    const res = await fetch(API_BASE + '/api/inventory/' + id + '/adjust', {
+      method:'POST', headers: { 'Content-Type':'application/json', ...authHeader() }, body: JSON.stringify({ delta })
+    });
+    if(handle401(res)) return;
+    loadItems();
+  }
+  async function del(id){
+    const ok = confirm('¿Borrar ítem ' + id + '?');
+    if(!ok) return;
+    const res = await fetch(API_BASE + '/api/inventory/' + id, { method:'DELETE', headers: { ...authHeader() } });
+    if(handle401(res)) return;
+    loadItems();
+  }
+  loadItems();
+</script>
+</body>
+</html>

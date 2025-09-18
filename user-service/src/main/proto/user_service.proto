@@ -4,6 +4,7 @@ package empuje.users;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
 
 option java_multiple_files = true;
 option java_package = "com.empuje.userservice.grpc.gen";
@@ -12,7 +13,7 @@ option java_outer_classname = "UserServiceProto";
 // Servicio para la gestión de usuarios y autenticación
 service UserService {
   // Crea un nuevo usuario
-  rpc CreateUser (CreateUserRequest) returns (UserResponse) {}
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
   
   // Obtiene un usuario por su ID
   rpc GetUser (GetUserRequest) returns (UserResponse) {}
@@ -33,7 +34,7 @@ service UserService {
   rpc CheckUsername (CheckUsernameRequest) returns (CheckAvailabilityResponse) {}
   
   // Verifica si un correo electrónico está disponible
-  rpc CheckEmail (CheckEmailRequest) returns (CheckAvailabilityResponse) {}
+  rpc CheckEmail (CheckEmailRequest) returns (CheckEmailResponse) {}
 }
 
 // Mensaje de solicitud para crear un usuario
@@ -47,6 +48,16 @@ message CreateUserRequest {
   string phone = 7;         // Teléfono del usuario (opcional)
   string address = 8;       // Dirección del usuario (opcional)
   string profile_image = 9; // URL de la imagen de perfil (opcional)
+}
+
+// Mensaje de respuesta para la creación de usuario
+message CreateUserResponse {
+  int64 id = 1;                    // ID del usuario creado
+  string username = 2;             // Nombre de usuario
+  string email = 3;                // Correo electrónico
+  string role = 4;                 // Rol del usuario
+  bool success = 5;                // Indica si la operación fue exitosa
+  string message = 6;              // Mensaje descriptivo (opcional)
 }
 
 // Mensaje de solicitud para obtener un usuario
@@ -105,10 +116,27 @@ message CheckEmailRequest {
   string email = 1;  // Correo electrónico a verificar
 }
 
+// Mensaje de solicitud para verificar disponibilidad de nombre de usuario o correo
+message CheckAvailabilityRequest {
+  string value = 1;  // Valor a verificar (username o email)
+}
+
 // Mensaje de respuesta para verificación de disponibilidad
 message CheckAvailabilityResponse {
   bool available = 1;  // Indica si el recurso está disponible
   string message = 2;  // Mensaje descriptivo (opcional)
+}
+
+// Mensaje de respuesta para verificación de correo electrónico
+message CheckEmailResponse {
+  bool available = 1;  // Indica si el correo electrónico está disponible
+  string message = 2;  // Mensaje descriptivo (opcional)
+}
+
+// Mensaje de respuesta para eliminación de usuario
+message DeleteUserResponse {
+  bool success = 1;  // Indica si la operación fue exitosa
+  string message = 2;  // Mensaje descriptivo
 }
 
 // Mensaje de respuesta para operaciones de usuario
@@ -138,12 +166,13 @@ message RoleResponse {
   bool is_active = 5;              // Estado del rol
 }
 
-// Definición de roles del sistema
+// Definición de roles del sistema según enunciado del TP
 enum SystemRole {
-  ROLE_UNSPECIFIED = 0;    // Rol no especificado
-  ROLE_ADMIN = 1;          // Administrador del sistema
-  ROLE_VOLUNTARIO = 2;     // Voluntario
-  ROLE_DONANTE = 3;        // Donante
+  ROLE_UNSPECIFIED = 0;
+  PRESIDENTE = 1;
+  VOCAL = 2;
+  COORDINADOR = 3;
+  VOLUNTARIO = 4;
 }
 
 // Mensaje para manejar respuestas genéricas

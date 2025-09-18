@@ -31,7 +31,8 @@ logs/
 
 # Database
 *.db
-*.sql
+# Allow SQL files in db/migration directory for Flyway
+!src/main/resources/db/migration/*.sql
 
 # OS specific
 .DS_Store

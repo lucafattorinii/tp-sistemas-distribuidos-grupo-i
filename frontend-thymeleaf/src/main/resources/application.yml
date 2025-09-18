@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: frontend-thymeleaf
+server:
+  port: 8080
+
+app:
+  gateway-url: ${API_GATEWAY_URL:http://localhost:8000}
