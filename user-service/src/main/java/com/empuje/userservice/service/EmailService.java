@@ -44,6 +44,27 @@ public class EmailService {
     }
 
     @Async
+    public void sendVerificationEmail(User user) {
+        if (user.getVerificationToken() == null) {
+            throw new IllegalStateException("No verification token found for user");
+        }
+        
+        String verificationUrl = frontendUrl + "/verify-email?token=" + user.getVerificationToken();
+        String subject = "Verifica tu correo electrónico - Empuje Comunitario";
+        String message = String.format(
+            "Hola %s,%n%n" +
+            "Por favor haz clic en el siguiente enlace para verificar tu dirección de correo electrónico:%n%n" +
+            "%s%n%n" +
+            "Si no has creado una cuenta, puedes ignorar este correo.%n%n" +
+            "Saludos,%nEl equipo de Empuje Comunitario",
+            user.getFullName(),
+            verificationUrl
+        );
+        
+        sendEmail(user.getEmail(), subject, message);
+    }
+    
+    @Async
     public void sendPasswordResetEmail(User user, String resetToken) {
         String resetUrl = frontendUrl + "/reset-password?token=" + resetToken;
         String subject = "Restablecer contraseña - Empuje Comunitario";

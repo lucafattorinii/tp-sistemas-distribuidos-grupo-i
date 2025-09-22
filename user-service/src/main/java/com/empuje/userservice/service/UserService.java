@@ -4,7 +4,7 @@ import com.empuje.userservice.dto.JwtAuthenticationResponse;
 import com.empuje.userservice.dto.LoginRequest;
 import com.empuje.userservice.dto.RoleDto;
 import com.empuje.userservice.dto.UserDto;
-import com.empuje.userservice.model.RoleName;
+import com.empuje.userservice.grpc.gen.SystemRole;
 import com.empuje.userservice.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -115,7 +115,7 @@ public interface UserService {
      * @param roleName the role name to filter by
      * @return list of users with the specified role
      */
-    List<User> findByRole(RoleName roleName);
+    List<User> findByRole(SystemRole role);
     
     /**
      * Get the currently authenticated user
@@ -132,7 +132,7 @@ public interface UserService {
      * @param updatedBy ID of the user performing the update
      * @return the updated user DTO
      */
-    UserDto updateUserRole(Long userId, RoleName roleName, Long updatedBy);
+    UserDto updateUserRole(Long userId, SystemRole role, Long updatedBy);
     
     /**
      * Get all roles assigned to a user
@@ -149,7 +149,7 @@ public interface UserService {
      * @param roleName the role name to check
      * @return true if the user has the role, false otherwise
      */
-    boolean hasRole(Long userId, RoleName roleName);
+    boolean hasRole(Long userId, SystemRole role);
     
     /**
      * Reset a user's password

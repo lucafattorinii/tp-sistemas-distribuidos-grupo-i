@@ -1,12 +1,10 @@
 package com.empuje.userservice.model;
 
 import com.empuje.userservice.grpc.gen.SystemRole;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
@@ -15,9 +13,13 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serial;
+import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * User entity that implements Spring Security's UserDetails interface.
@@ -33,9 +35,11 @@ import java.util.Collections;
 @Where(clause = "is_active = true")
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class User extends BaseEntity implements UserDetails {
     
     @Serial
@@ -60,6 +64,9 @@ public class User extends BaseEntity implements UserDetails {
 
     @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
+
+    @Transient
+    private String roleName; // Transient field to expose role name in JSON
 
     @Column(name = "dni", length = 20)
     private String dni;
@@ -89,291 +96,74 @@ public class User extends BaseEntity implements UserDetails {
     private LocalDateTime passwordResetExpires;
 
     @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    private LocalDateTime lastLoginDate;
+    
+    @Column(name = "last_password_reset_date")
+    private Instant lastPasswordResetDate;
+    
+    public LocalDateTime getLastLogin() {
+        return lastLoginDate;
+    }
+    
+    public void setLastLoginDate(LocalDateTime lastLoginDate) {
+        this.lastLoginDate = lastLoginDate;
+    }
+    
+    /**
+     * Sets the last login timestamp using an Instant.
+     * @param lastLogin the instant when the user last logged in
+     */
+    public void setLastLogin(Instant lastLogin) {
+        this.lastLoginDate = lastLogin != null ? lastLogin.atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+    }
+    
+    public Instant getLastPasswordResetDate() {
+        return lastPasswordResetDate;
+    }
+    
+    public void setLastPasswordResetDate(Instant lastPasswordResetDate) {
+        this.lastPasswordResetDate = lastPasswordResetDate;
+    }
+    
+    /**
+     * Sets the password reset token expiry using an Instant.
+     * @param expiry the instant when the password reset token expires
+     */
+    public void setPasswordResetTokenExpiry(Instant expiry) {
+        this.passwordResetExpires = expiry != null ? expiry.atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
+    }
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // To handle lazy loading
     private Role role;
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
-    /**
-     * Returns the authorities granted to the user.
-     * 
-     * @return a collection of authorities
-     */
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return role != null 
-            ? Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
-            : Collections.emptyList();
-    }
-    
-    /**
-     * Get the user's role name as a string.
-     * 
-     * @return Role name as string (e.g., "ROLE_ADMIN")
-     */
-    public String getRoleName() {
-        return role != null ? role.getName().name() : "";
-    }
-
-    /**
-     * Indicates whether the user's account has expired.
-     * 
-     * @return true if the user's account is valid (ie non-expired), false if no longer valid (ie expired)
-     */
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    /**
-     * Indicates whether the user is locked or unlocked.
-     * 
-     * @return true if the user is not locked, false otherwise
-     */
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    /**
-     * Indicates whether the user's credentials (password) has expired.
-     * 
-     * @return true if the user's credentials are valid (ie non-expired), false if no longer valid (ie expired)
-     */
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    /**
-     * Indicates whether the user is enabled or disabled.
-     * 
-     * @return true if the user is enabled, false otherwise
-     */
-    @Override
-    public boolean isEnabled() {
-        return active;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return id != null && id.equals(user.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getDni() {
-        return dni;
-    }
-    
-    public void setDni(String dni) {
-        this.dni = dni;
-    }
-    
-    @Column(length = 20)
-    private String phone;
-    
-    public String getPhone() {
-        return phone;
-    }
-    
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-    
-    @Column(length = 500)
-    private String address;
-    
-    public String getAddress() {
-        return address;
-    }
-    
-    public void setAddress(String address) {
-        this.address = address;
-    }
-    
-    @Column(name = "profile_image", length = 255)
-    private String profileImage;
-    
-    public String getProfileImage() {
-        return profileImage;
-    }
-    
-    public void setProfileImage(String profileImage) {
-        this.profileImage = profileImage;
-    }
-
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
-    
-    public LocalDateTime getLastLogin() {
-        return lastLogin;
-    }
-    
-    public void setLastLogin(LocalDateTime lastLogin) {
-        this.lastLogin = lastLogin;
-    }
-    
-    @Column(name = "is_active", nullable = false)
-    private boolean active = true;
-    
-    @Override
-    public boolean isEnabled() {
-        return this.active;
-    }
-    
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-    
-    @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified = false;
-    
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-    
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
-    
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private SystemRole role;
-    
-    public SystemRole getRole() {
-        return role;
-    }
-    
-    public void setRole(SystemRole role) {
-        this.role = role;
-    }
-
-    @Column(name = "verification_token", length = 64)
-    private String verificationToken;
-    
-    public String getVerificationToken() {
-        return verificationToken;
-    }
-    
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
-    }
-
-    @Column(name = "password_reset_token", length = 64)
-    private String passwordResetToken;
-    
-    public String getPasswordResetToken() {
-        return passwordResetToken;
-    }
-    
-    public void setPasswordResetToken(String passwordResetToken) {
-        this.passwordResetToken = passwordResetToken;
-    }
-
-    @Column(name = "password_reset_expires")
-    private LocalDateTime passwordResetExpires;
-    
-    public LocalDateTime getPasswordResetExpires() {
-        return passwordResetExpires;
-    }
-    
-    public void setPasswordResetExpires(LocalDateTime passwordResetExpires) {
-        this.passwordResetExpires = passwordResetExpires;
-    }
-
     @Column(name = "account_non_expired", nullable = false)
     private boolean accountNonExpired = true;
-    
-    public void setAccountNonExpired(boolean accountNonExpired) {
-        this.accountNonExpired = accountNonExpired;
-    }
 
     @Column(name = "account_non_locked", nullable = false)
     private boolean accountNonLocked = true;
-    
-    public void setAccountNonLocked(boolean accountNonLocked) {
-        this.accountNonLocked = accountNonLocked;
-    }
 
     @Column(name = "credentials_non_expired", nullable = false)
     private boolean credentialsNonExpired = true;
-    
-    public void setCredentialsNonExpired(boolean credentialsNonExpired) {
-        this.credentialsNonExpired = credentialsNonExpired;
-    }
 
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
-    
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
+        if (role == null || role.getName() == null) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.getName().name()));
     }
-
 
     @Override
     public boolean isAccountNonExpired() {
@@ -388,6 +178,11 @@ public class User extends BaseEntity implements UserDetails {
     @Override
     public boolean isCredentialsNonExpired() {
         return this.credentialsNonExpired;
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return this.active && this.enabled;
     }
 
     
@@ -429,7 +224,7 @@ public class User extends BaseEntity implements UserDetails {
             return this;
         }
         
-        public Builder role(SystemRole role) {
+        public Builder role(Role role) {
             user.setRole(role);
             return this;
         }
@@ -444,11 +239,48 @@ public class User extends BaseEntity implements UserDetails {
             return this;
         }
         
+        public Builder phone(String phone) {
+            user.setPhone(phone);
+            return this;
+        }
+        
+        public Builder address(String address) {
+            user.setAddress(address);
+            return this;
+        }
+        
+        public Builder profileImage(String profileImage) {
+            user.setProfileImage(profileImage);
+            return this;
+        }
+        
+        public Builder profileImageUrl(String profileImageUrl) {
+            user.setProfileImageUrl(profileImageUrl);
+            return this;
+        }
+        
+        public Builder verificationToken(String verificationToken) {
+            user.setVerificationToken(verificationToken);
+            return this;
+        }
+        
+        public Builder passwordResetToken(String passwordResetToken) {
+            user.setPasswordResetToken(passwordResetToken);
+            return this;
+        }
+        
+        public Builder passwordResetExpires(LocalDateTime passwordResetExpires) {
+            user.setPasswordResetExpires(passwordResetExpires);
+            return this;
+        }
+        
+        public Builder lastLogin(LocalDateTime lastLogin) {
+            user.setLastLoginDate(lastLogin);
+            return this;
+        }
+        
         public User build() {
-            // Set default values if not set
-            if (user.getRole() == null) {
-                user.setRole(SystemRole.VOLUNTARIO);
-            }
+            // Any default values can be set here if needed
             return user;
         }
     }
@@ -462,27 +294,34 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     /**
-     * Gets the user's full name.
-     * @return the concatenated first and last name
+     * Gets the name of the user's role.
+     * @return the role name or empty string if not set
      */
-    public String getFullName() {
-        return String.format("%s %s", firstName, lastName).trim();
+    public String getRoleName() {
+        if (roleName == null && role != null && role.getName() != null) {
+            roleName = role.getName().name();
+        }
+        return roleName != null ? roleName : "";
     }
 
     /**
      * Checks if the user has the specified role.
-     * @param roleName the role to check
+     * @param systemRole the role to check
      * @return true if the user has the role, false otherwise
      */
     public boolean hasRole(SystemRole systemRole) {
-        return role != null && role == systemRole;
+        return role != null && role.getName() != null && role.getName().equals(systemRole);
     }
 
     /**
-     * Gets the user's role name.
-     * @return the role name or null if no role is set
+     * Returns the user's full name by combining first and last name
+     * @return the full name of the user
      */
-
+    public String getFullName() {
+        return (firstName != null ? firstName : "") + 
+               (lastName != null ? " " + lastName : "").trim();
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -504,7 +343,7 @@ public class User extends BaseEntity implements UserDetails {
                "id=" + id +
                ", username='" + username + '\'' +
                ", email='" + email + '\'' +
-               ", role=" + (role != null ? role.name() : "null") +
+               ", role=" + (role != null && role.getName() != null ? role.getName().name() : "null") +
                ", enabled=" + enabled +
                '}';
     }

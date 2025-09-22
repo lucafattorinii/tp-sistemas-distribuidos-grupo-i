@@ -1,5 +1,36 @@
-// Deprecated reference file. The active gRPC implementation is UserGrpcServiceImpl.
-// This file is intentionally left minimal to avoid IDE parsing errors.
+package com.empuje.userservice.grpc;
+
+import com.empuje.userservice.dto.UserDto;
+import com.empuje.userservice.model.RoleName;
+import com.empuje.userservice.exception.ResourceNotFoundException;
+import com.empuje.userservice.grpc.gen.SystemRole;
+import com.empuje.userservice.security.JwtTokenProvider;
+import com.empuje.userservice.service.UserService;
+import com.empuje.userservice.util.ProtoMapper;
+import com.google.protobuf.Empty;
+import io.grpc.Status;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.List;
+import io.grpc.stub.StreamObserver;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+/**
+ * Deprecated reference file. The active gRPC implementation is UserGrpcServiceImpl.
+ * This file is intentionally left minimal to avoid IDE parsing errors.
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class UserGrpcService extends com.empuje.userservice.grpc.gen.UserServiceGrpc.UserServiceImplBase {
+    
+    private static final Long SYSTEM_USER_ID = 1L; // ID del usuario del sistema
+    private static final long TOKEN_EXPIRATION = 86400000; // 24 hours in milliseconds
+    private static final String TOKEN_TYPE = "Bearer";
+    
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
@@ -15,7 +46,6 @@
                 request.getPassword() == null || request.getPassword().isEmpty()) {
                 throw new IllegalArgumentException("Username, email and password are required");
             }
-*/
 
             // Map request to DTO
             UserDto userDto = new UserDto();
@@ -33,9 +63,20 @@
             // Set role
             // Set role if provided
             if (!request.getRole().isEmpty()) {
-                userDto.setRole(SystemRole.valueOf(request.getRole()));
+                // Convert role string to SystemRole
+                String roleStr = request.getRole().toUpperCase();
+                try {
+                    // First convert to RoleName to validate the role
+                    RoleName roleName = RoleName.valueOf(roleStr);
+                    // Then convert to SystemRole
+                    SystemRole systemRole = SystemRole.valueOf(roleName.name());
+                    userDto.setRole(systemRole);
+                } catch (IllegalArgumentException e) {
+                    // Use a default role if the provided role is invalid
+                    userDto.setRole(SystemRole.ROLE_DONANTE);
+                }
             } else {
-                // Default role
+                // Default role if not provided
                 userDto.setRole(SystemRole.ROLE_DONANTE);
             }
             

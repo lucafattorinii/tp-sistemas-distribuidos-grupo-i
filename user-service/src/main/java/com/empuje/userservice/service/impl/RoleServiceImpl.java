@@ -5,14 +5,18 @@ import com.empuje.userservice.exception.ResourceAlreadyExistsException;
 import com.empuje.userservice.exception.ResourceNotFoundException;
 import com.empuje.userservice.mapper.RoleMapper;
 import com.empuje.userservice.model.Role;
-import com.empuje.userservice.model.RoleName;
+import com.empuje.userservice.grpc.gen.SystemRole;
 import com.empuje.userservice.repository.RoleRepository;
 import com.empuje.userservice.service.RoleService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,7 +36,7 @@ public class RoleServiceImpl implements RoleService {
     private final RoleMapper roleMapper;
 
     @Override
-    public RoleDto findByName(RoleName name) {
+    public RoleDto findByName(SystemRole name) {
         log.debug("Finding role by name: {}", name);
         return roleRepository.findByName(name)
                 .map(roleMapper::toDto)
@@ -48,7 +52,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public List<RoleDto> findByNames(Set<RoleName> names) {
+    public List<RoleDto> findByNames(Set<SystemRole> names) {
         log.debug("Finding roles by names: {}", names);
         return roleRepository.findByNames(names).stream()
                 .map(roleMapper::toDto)
@@ -76,7 +80,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public RoleDto updateRole(RoleName name, RoleDto roleDto) {
+    public RoleDto updateRole(SystemRole name, RoleDto roleDto) {
         log.debug("Updating role: {}", name);
         
         Role existingRole = roleRepository.findByName(name)
@@ -103,7 +107,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public void deleteRole(RoleName name) {
+    public void deleteRole(SystemRole name) {
         log.debug("Deleting role: {}", name);
         
         Role role = roleRepository.findByName(name)
@@ -116,7 +120,7 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
-    public boolean existsByName(RoleName name) {
+    public boolean existsByName(SystemRole name) {
         return roleRepository.existsByNameAndActiveTrue(name);
     }
 
@@ -124,16 +128,30 @@ public class RoleServiceImpl implements RoleService {
     public RoleDto getDefaultRole() {
         log.debug("Getting default role");
         // Default role is ROLE_DONANTE
-        return roleRepository.findByName(RoleName.ROLE_DONANTE)
+        return roleRepository.findByName(SystemRole.ROLE_DONANTE)
                 .map(roleMapper::toDto)
                 .orElseThrow(() -> new IllegalStateException("Default role ROLE_DONANTE not found"));
     }
 
     @Override
-    public Page<RoleDto> searchRoles(RoleName name, Boolean active, Pageable pageable) {
+    public Page<RoleDto> searchRoles(SystemRole name, Boolean active, Pageable pageable) {
         log.debug("Searching roles with name: {}, active: {}", name, active);
-        return roleRepository.searchRoles(name, active, pageable)
-                .map(roleMapper::toDto);
+        List<Role> allRoles = roleRepository.searchRoles(name, active);
+        
+        // Apply pagination manually
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), allRoles.size());
+        
+        if (start > allRoles.size()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, allRoles.size());
+        }
+        
+        List<Role> pageContent = allRoles.subList(start, end);
+        return new PageImpl<>(
+            pageContent.stream().map(roleMapper::toDto).collect(Collectors.toList()),
+            pageable,
+            allRoles.size()
+        );
     }
 
     @Override

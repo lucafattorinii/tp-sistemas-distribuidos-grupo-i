@@ -13,4 +13,5 @@ public class JwtAuthenticationResponse {
     private String accessToken;
     private String tokenType = "Bearer";
     private UserDto user;
+    private long expiresIn; // Token expiration time in seconds
 }

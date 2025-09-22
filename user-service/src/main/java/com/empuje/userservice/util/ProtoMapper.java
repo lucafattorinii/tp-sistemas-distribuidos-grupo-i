@@ -1,8 +1,7 @@
 package com.empuje.userservice.util;
 
 import com.empuje.userservice.dto.UserDto;
-import com.empuje.userservice.grpc.gen.SystemRole;
-// Role import removed as we're using SystemRole directly
+import com.empuje.userservice.model.RoleName;
 import com.empuje.userservice.model.User;
 import com.empuje.userservice.grpc.gen.*;
 import com.google.protobuf.Timestamp;
@@ -39,8 +38,8 @@ public class ProtoMapper {
                 .setLastName(userDto.getLastName() != null ? userDto.getLastName() : "")
                 .setPhone(safeGetString(userDto.getPhone()))
                 .setAddress(safeGetString(userDto.getAddress()))
-                .setIsActive(userDto.isActive())
-                .setEmailVerified(userDto.isEmailVerified());
+                .setIsActive(userDto.getActive() != null && userDto.getActive())
+                .setEmailVerified(userDto.getEmailVerified() != null && userDto.getEmailVerified());
         
         // Mapeo del Rol
         if (userDto.getRole() != null) {
@@ -62,16 +61,19 @@ public class ProtoMapper {
     public UserDto toUserDto(CreateUserRequest request) {
         Objects.requireNonNull(request, "CreateUserRequest cannot be null");
         
-        SystemRole role = SystemRole.VOLUNTARIO; // Default role per TP
+        com.empuje.userservice.grpc.gen.SystemRole role = com.empuje.userservice.grpc.gen.SystemRole.ROLE_DONANTE;
         
-        // Safe role parsing
-        String roleStr = request.getRole();
-        if (roleStr != null && !roleStr.isEmpty()) {
+        // Convert role from string to SystemRole
+        if (request.getRole() != null && !request.getRole().isEmpty()) {
             try {
-                role = SystemRole.valueOf(roleStr.toUpperCase());
+                // First convert the role string to RoleName
+                RoleName roleName = RoleName.valueOf(request.getRole().toUpperCase());
+                // Then convert RoleName to SystemRole
+                role = com.empuje.userservice.grpc.gen.SystemRole.valueOf(roleName.name());
             } catch (IllegalArgumentException e) {
-                log.warn("Invalid role provided: {}. Using default role: {}", 
-                        roleStr, role);
+                log.warn("Invalid role provided in CreateUserRequest: {}", request.getRole(), e);
+                // Use a default role
+                role = com.empuje.userservice.grpc.gen.SystemRole.ROLE_DONANTE;
             }
         }
         
@@ -109,8 +111,11 @@ public class ProtoMapper {
         // Handle role if provided
         if (request.getRole() != null && !request.getRole().isEmpty()) {
             try {
-                SystemRole role = SystemRole.valueOf(request.getRole().toUpperCase());
-                builder.role(role);
+                // Convert the string role to RoleName and then to SystemRole
+                String roleStr = request.getRole().toUpperCase();
+                RoleName roleName = RoleName.valueOf(roleStr);
+                SystemRole systemRole = SystemRole.valueOf(roleName.name());
+                builder.role(systemRole);
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid role provided in UpdateUserRequest: {}", request.getRole(), e);
             }
@@ -122,13 +127,14 @@ public class ProtoMapper {
     /**
      * Builds a RoleResponse from a SystemRole enum
      */
-    private static RoleResponse buildRoleResponse(SystemRole systemRole) {
+    private static RoleResponse buildRoleResponse(com.empuje.userservice.grpc.gen.SystemRole systemRole) {
         if (systemRole == null) {
             return RoleResponse.newBuilder()
+                    .setId(com.empuje.userservice.grpc.gen.SystemRole.ROLE_UNSPECIFIED.getNumber())
                     .setName("")
                     .build();
         }
-        
+            
         return RoleResponse.newBuilder()
                 .setId(systemRole.getNumber())
                 .setName(systemRole.name())

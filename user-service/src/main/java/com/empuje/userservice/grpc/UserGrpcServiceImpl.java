@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import com.empuje.userservice.model.RoleName;
 
 @Slf4j
 @GrpcService
@@ -54,11 +55,22 @@ public class UserGrpcServiceImpl extends UserServiceGrpc.UserServiceImplBase {
             
             // Set role if provided
             if (!request.getRole().isEmpty()) {
-                // Convert role string to enum value
-                userDto.setRole(SystemRole.valueOf(request.getRole().toUpperCase()));
+                // Convert role string to SystemRole
+                String roleStr = request.getRole().toUpperCase();
+                try {
+                    // First convert to RoleName to validate the role
+                    RoleName roleName = RoleName.valueOf(roleStr);
+                    // Then convert to SystemRole
+                    SystemRole systemRole = SystemRole.valueOf(roleName.name());
+                    userDto.setRole(systemRole);
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid role provided in CreateUserRequest: {}", roleStr, e);
+                    // Use a default role if the provided role is invalid
+                    userDto.setRole(SystemRole.ROLE_DONANTE);
+                }
             } else {
                 // Default role if not provided
-                userDto.setRole(SystemRole.VOLUNTARIO);
+                userDto.setRole(SystemRole.ROLE_DONANTE);
             }
             
             // Set optional fields
@@ -111,7 +123,19 @@ public class UserGrpcServiceImpl extends UserServiceGrpc.UserServiceImplBase {
             
             // Update role if provided and not empty
             if (!request.getRole().isEmpty()) {
-                userDto.setRole(SystemRole.valueOf(request.getRole().toUpperCase()));
+                // Convert from gRPC role string to SystemRole
+                String roleStr = request.getRole().toUpperCase();
+                try {
+                    // First convert to RoleName to validate the role
+                    RoleName roleName = RoleName.valueOf(roleStr);
+                    // Then convert to SystemRole
+                    SystemRole systemRole = SystemRole.valueOf(roleName.name());
+                    userDto.setRole(systemRole);
+                } catch (IllegalArgumentException e) {
+                    log.warn("Invalid role provided in UpdateUserRequest: {}", roleStr, e);
+                    // Use a default role if the provided role is invalid
+                    userDto.setRole(SystemRole.ROLE_DONANTE);
+                }
             }
             
             // Update password if provided
@@ -193,9 +217,11 @@ public class UserGrpcServiceImpl extends UserServiceGrpc.UserServiceImplBase {
             
         // Set role if available
         if (userDto.getRole() != null) {
+            // Convert RoleName to SystemRole
+            SystemRole systemRole = SystemRole.valueOf(userDto.getRole().name());
             RoleResponse roleResponse = RoleResponse.newBuilder()
-                .setId(userDto.getRole().getNumber())
-                .setName(userDto.getRole().name())
+                .setId(systemRole.getNumber())
+                .setName(systemRole.name())
                 .setIsActive(true)
                 .build();
             builder.setRole(roleResponse);

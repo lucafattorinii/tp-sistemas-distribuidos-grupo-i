@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Lazy;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -67,7 +68,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final RoleService roleService;
-    
+    private final ModelMapper modelMapper;
     @Lazy
     private final EmailService emailService;
     
@@ -102,9 +103,9 @@ public class UserServiceImpl implements UserService {
                 userDto.getPassword() : generateRandomPassword();
         user.setPassword(passwordEncoder.encode(password));
         
-        // Set role
+        // Set role - default to ROLE_VOLUNTARIO if not specified
         SystemRole role = userDto.getRole() != null ? 
-                userDto.getRole() : SystemRole.VOLUNTARIO;
+                userDto.getRole() : SystemRole.ROLE_VOLUNTARIO;
         setUserRole(user, role);
         
         // Set audit fields
@@ -132,9 +133,10 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(savedUser);
     }
     
-    private void setUserRole(User user, SystemRole roleName) {
-        Role role = roleRepository.findByName(roleName)
-            .orElseThrow(() -> new ResourceNotFoundException("Role", "name", roleName.name()));
+    private void setUserRole(User user, SystemRole systemRole) {
+        // Find the role by SystemRole
+        Role role = roleRepository.findByName(systemRole)
+            .orElseThrow(() -> new ResourceNotFoundException("Role", "name", systemRole.name()));
         user.setRole(role);
     }
 
@@ -257,7 +259,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findByRole(SystemRole role) {
         log.debug("Fetching users with role: {}", role);
-        return userRepository.findByRoleName(role);
+        return userRepository.findByRole(role);
     }
 
     @Override
@@ -401,22 +403,22 @@ public class UserServiceImpl implements UserService {
     
     @Override
     @Transactional
-    public UserDto updateUserRole(Long userId, RoleName roleName, Long updatedBy) {
-        log.info("Updating role to {} for user id: {}", roleName, userId);
+    public UserDto updateUserRole(Long userId, SystemRole systemRole, Long updatedBy) {
+        log.info("Updating role to {} for user id: {}", systemRole, userId);
         
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
                 
         // Get the role entity
-        Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", roleName.name()));
+        Role role = roleRepository.findByName(systemRole)
+                .orElseThrow(() -> new ResourceNotFoundException("Role", "name", systemRole.name()));
         
         // Update the role
         user.setRole(role);
         user.setUpdatedBy(updatedBy);
         
         User updatedUser = userRepository.save(user);
-        log.info("Updated role for user id: {} to {}", userId, roleName);
+        log.info("Updated role for user id: {} to {}", userId, systemRole);
         
         return mapToDto(updatedUser);
     }
@@ -434,13 +436,13 @@ public class UserServiceImpl implements UserService {
     }
     
     @Override
-    public boolean hasRole(Long userId, RoleName roleName) {
-        log.debug("Checking if user {} has role: {}", userId, roleName);
+    public boolean hasRole(Long userId, SystemRole role) {
+        log.debug("Checking if user {} has role: {}", userId, role);
         
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
                 
-        return user.getRole() != null && user.getRole().getName() == roleName;
+        return user.getRole() != null && user.getRole().getName() == role;
     }
     
     @Override
@@ -521,19 +523,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.existsByEmail(email);
     }
 
-    @Override
-    public List<User> findByRole(SystemRole role) {
-        return userRepository.findByRole(role);
-    }
-
-    @Override
-    public User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "username", username));
-    }
-    
     private UserDto mapToDto(User user) {
         return modelMapper.map(user, UserDto.class);
     }

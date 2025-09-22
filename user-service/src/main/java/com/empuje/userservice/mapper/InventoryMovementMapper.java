@@ -1,5 +1,6 @@
 package com.empuje.userservice.mapper;
 
+import com.empuje.userservice.dto.InventoryItemDto;
 import com.empuje.userservice.dto.InventoryMovementDto;
 import com.empuje.userservice.model.InventoryMovement;
 import org.mapstruct.*;

@@ -25,6 +25,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     boolean existsByEmailAndIdNot(String email, Long id);
     
+    boolean existsByUsernameAndIdNot(String username, Long id);
+    
     @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.username = :identifier")
     Optional<User> findByUsernameOrEmail(@Param("identifier") String identifier);
     
@@ -34,4 +36,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     @Query("SELECT u FROM User u WHERE u.active = :active")
     Page<User> findByActive(@Param("active") boolean active, Pageable pageable);
+    
+    /**
+     * Find a user by their verification token.
+     *
+     * @param verificationToken the verification token to search for
+     * @return an Optional containing the user if found, or empty if not found
+     */
+    Optional<User> findByVerificationToken(String verificationToken);
 }

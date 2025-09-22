@@ -1,6 +1,7 @@
 package com.empuje.userservice.dto;
 
 import com.empuje.userservice.grpc.gen.SystemRole;
+import com.empuje.userservice.model.Role;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.empuje.userservice.model.User;
 import jakarta.validation.constraints.Email;
@@ -8,10 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
@@ -20,10 +18,12 @@ import java.time.LocalDateTime;
  * DTO for {@link com.empuje.userservice.model.User} entity.
  * This DTO is used for both API and gRPC communication.
  */
-@Data
-@SuperBuilder
+@Getter
+@Setter
+@SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class UserDto extends BaseDto {
     @NotBlank(message = "El nombre de usuario es requerido", groups = {CreateValidationGroup.class})
@@ -94,14 +94,7 @@ public class UserDto extends BaseDto {
      */
     public interface UpdateValidationGroup {}
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    // Los getters y setters para 'id' ya son proporcionados por Lombok a través de @Data
 
     public String getUsername() {
         return username;
@@ -182,7 +175,7 @@ public class UserDto extends BaseDto {
     public void setRole(SystemRole role) {
         this.role = role;
     }
-    
+
     public void setRole(String roleName) {
         this.role = SystemRole.valueOf(roleName);
     }
@@ -209,20 +202,24 @@ public class UserDto extends BaseDto {
         this.verificationToken = verificationToken;
     }
 
+    @Override
     public LocalDateTime getCreatedAt() {
-        return createdAt;
+        return super.getCreatedAt();
     }
 
+    @Override
     public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+        super.setCreatedAt(createdAt);
     }
 
+    @Override
     public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+        return super.getUpdatedAt();
     }
 
+    @Override
     public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+        super.setUpdatedAt(updatedAt);
     }
 
     // Mapeo desde la entidad User
@@ -243,6 +240,7 @@ public class UserDto extends BaseDto {
         dto.setProfileImage(user.getProfileImage());
         
         if (user.getRole() != null && user.getRole().getName() != null) {
+            // Usar directamente el SystemRole
             dto.setRole(user.getRole().getName());
         }
         

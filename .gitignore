@@ -1,20 +1,30 @@
-# Java
-*.class
+# Java / Maven
+target/
+**/target/
 *.jar
 *.war
+*.class
 *.ear
 *.zip
 *.tar.gz
 *.rar
-*.iml
-.idea/
-*.iws
-*.ipr
-*.classpath
-.project
-.settings/
-bin/
-target/
+.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Environment variables
+.env
+!.env.example
+
+# Secrets and certificates
+*.p12
+*.jks
+*.keystore
+*.truststore
+*.pem
+*.crt
+*.key
+secrets/
+**/secrets/
 
 # Node
 node_modules/
@@ -42,9 +52,22 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+gateway-fastapi/pb/
 
-# IDE
+# IDEs
+.idea/
 .vscode/
+*.iml
+*.iws
+*.ipr
+*.classpath
+.project
+.settings/
+bin/
+
+# System files
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
 

@@ -1,4 +1,57 @@
+# Sistema de Gestión para ONG Empuje Comunitario
+
 Sistema distribuido para la gestión de usuarios, inventario de donaciones y eventos solidarios de la ONG Empuje Comunitario.
+
+## Primeros Pasos
+
+### Configuración del Entorno
+
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/tu-usuario/tp-sistemas-distribuidos-grupo-i.git
+   cd tp-sistemas-distribuidos-grupo-i
+   ```
+
+2. **Configurar variables de entorno**
+   - Copiar el archivo `.env.example` a `.env`
+   - Generar contraseñas seguras con el script:
+     ```bash
+     python scripts/generate-secrets.py
+     ```
+   - Esto creará automáticamente un archivo `.env` con valores seguros
+
+3. **Iniciar la aplicación**
+   ```bash
+   docker compose up --build
+   ```
+
+### Acceso
+- **Frontend**: http://localhost:8080
+- **API Gateway**: http://localhost:8000
+- **Base de datos**: localhost:3306
+
+### Usuarios de prueba
+Se creará automáticamente un usuario administrador:
+- **Email**: admin@empuje.org
+- **Contraseña**: Ver logs de inicio (`docker compose logs user-service`)
+
+## Seguridad
+
+### Variables de Entorno
+Nunca compartas tu archivo `.env` ni lo subas a control de versiones. El archivo `.env.example` muestra las variables necesarias sin valores sensibles.
+
+### Generación de Secretos
+El sistema utiliza los siguientes secretos:
+- `JWT_SECRET`: Para firmar tokens JWT
+- `MYSQL_ROOT_PASSWORD`: Contraseña del usuario root de MySQL
+- `MYSQL_PASSWORD`: Contraseña del usuario de la aplicación
+
+### Actualización de Secretos
+Si necesitas regenerar los secretos:
+1. Detén los contenedores: `docker compose down`
+2. Elimina el archivo `.env`
+3. Vuelve a generar los secretos: `python scripts/generate-secrets.py`
+4. Reinicia la aplicación: `docker compose up --build`
 
 ## Arquitectura
 

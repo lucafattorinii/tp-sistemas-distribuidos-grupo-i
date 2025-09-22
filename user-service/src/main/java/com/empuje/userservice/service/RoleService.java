@@ -1,7 +1,7 @@
 package com.empuje.userservice.service;
 
 import com.empuje.userservice.dto.RoleDto;
-import com.empuje.userservice.model.RoleName;
+import com.empuje.userservice.grpc.gen.SystemRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -19,7 +19,7 @@ public interface RoleService {
      * @param name the name of the role
      * @return the role DTO
      */
-    RoleDto findByName(RoleName name);
+    RoleDto findByName(SystemRole name);
 
     /**
      * Find all active roles
@@ -34,7 +34,7 @@ public interface RoleService {
      * @param names set of role names
      * @return list of role DTOs
      */
-    List<RoleDto> findByNames(Set<RoleName> names);
+    List<RoleDto> findByNames(Set<SystemRole> names);
 
     /**
      * Create a new role
@@ -51,14 +51,14 @@ public interface RoleService {
      * @param roleDto the updated role data
      * @return the updated role DTO
      */
-    RoleDto updateRole(RoleName name, RoleDto roleDto);
+    RoleDto updateRole(SystemRole name, RoleDto roleDto);
 
     /**
      * Delete a role by name
      *
      * @param name the name of the role to delete
      */
-    void deleteRole(RoleName name);
+    void deleteRole(SystemRole name);
 
     /**
      * Check if a role with the given name exists and is active
@@ -66,7 +66,7 @@ public interface RoleService {
      * @param name the role name to check
      * @return true if the role exists and is active, false otherwise
      */
-    boolean existsByName(RoleName name);
+    boolean existsByName(SystemRole name);
 
     /**
      * Get the default role for new users
@@ -83,7 +83,7 @@ public interface RoleService {
      * @param pageable pagination information
      * @return page of role DTOs
      */
-    Page<RoleDto> searchRoles(RoleName name, Boolean active, Pageable pageable);
+    Page<RoleDto> searchRoles(SystemRole name, Boolean active, Pageable pageable);
 
     /**
      * Count active roles

@@ -1,87 +1,124 @@
+version: '3.8'
+
+# Load environment variables from .env file
+env_file: .env
+
 services:
-  # Database
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: empuje
-      MYSQL_USER: root
-      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./db/migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
+      start_period: 30s
+    networks:
+      - empuje-network
+    restart: unless-stopped
 
-  # User Service
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    networks:
+      - empuje-network
+    restart: unless-stopped
+
   user-service:
     build:
       context: ./user-service
       dockerfile: Dockerfile
+    ports:
+      - "50051:50051" # gRPC
+      - "${USER_SERVICE_PORT}:8080" # REST
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/empuje?useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: empuje
-      SPRING_DATASOURCE_PASSWORD: empuje
-      SERVER_PORT: 50051
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_AUTH: ${SMTP_AUTH}
+      SMTP_STARTTLS_ENABLE: ${SMTP_STARTTLS_ENABLE}
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "50051:50051"
+      mailhog:
+        condition: service_started
     networks:
       - empuje-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Inventory Service
   inventory-service:
-    build:
-      context: ./inventory-service
-      dockerfile: Dockerfile
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/empuje?useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: empuje
-      SPRING_DATASOURCE_PASSWORD: empuje
-      SERVER_PORT: 50052
-    depends_on:
-      db:
-        condition: service_healthy
+    build: ./inventory-service
     ports:
       - "50052:50052"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      DATABASE_NAME: empuje
+      DATABASE_USER: empuje
+      DATABASE_PASSWORD: empuje
+      JWT_SECRET: "changeme_secret_dev"
+    depends_on:
+      - db
     networks:
       - empuje-network
 
-  # Event Service
   event-service:
-    build:
-      context: ./event-service
-      dockerfile: Dockerfile
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/empuje?useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: empuje
-      SPRING_DATASOURCE_PASSWORD: empuje
-      SERVER_PORT: 50053
-    depends_on:
-      db:
-        condition: service_healthy
+    build: ./event-service
     ports:
       - "50053:50053"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+      DATABASE_NAME: empuje
+      DATABASE_USER: empuje
+      DATABASE_PASSWORD: empuje
+      JWT_SECRET: "changeme_secret_dev"
+    depends_on:
+      - db
+      - inventory-service
     networks:
       - empuje-network
 
-  # API Gateway
-  gateway:
-    build:
-      context: ./gateway-fastapi
-      dockerfile: Dockerfile
-    environment:
-      USER_SERVICE_URL: user-service:50051
-      INVENTORY_SERVICE_URL: inventory-service:50052
-      EVENT_SERVICE_URL: event-service:50053
-      JWT_SECRET: your_jwt_secret_key_here
+  gateway-fastapi:
+    build: ./gateway-fastapi
     ports:
       - "8000:8000"
+    environment:
+      USERSERVICE_HOST: user-service
+      USERSERVICE_PORT: 50051
+      INVENTORYSERVICE_HOST: inventory-service
+      INVENTORYSERVICE_PORT: 50052
+      EVENTSERVICE_HOST: event-service
+      EVENTSERVICE_PORT: 50053
+      JWT_SECRET: "changeme_secret_dev"
     depends_on:
       - user-service
       - inventory-service
@@ -89,17 +126,12 @@ services:
     networks:
       - empuje-network
 
-  # Frontend
   frontend:
-    build:
-      context: ./frontend-thymeleaf
-      dockerfile: Dockerfile
+    build: ./frontend-thymeleaf
     ports:
       - "8080:8080"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
     depends_on:
-      - gateway
+      - gateway-fastapi
     networks:
       - empuje-network
 

@@ -1,19 +1,47 @@
 #!/bin/bash
+set -euo pipefail
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+USER_PROTO="$ROOT_DIR/user-service/src/main/proto/user_service.proto"
+INVENTORY_PROTO="$ROOT_DIR/inventory-service/src/main/proto/inventory_service.proto"
+EVENT_PROTO="$ROOT_DIR/event-service/src/main/proto/event_service.proto"
 
-# Create directories for generated files
-mkdir -p ../user-service/src/main/java
-mkdir -p ../inventory-service/src/main/java
-mkdir -p ../event-service/src/main/java
-mkdir -p ../gateway-fastapi/empuje
+echo "Generating gRPC stubs if protoc and plugins are available..."
 
-# Generate Java stubs
-protoc --java_out=../user-service/src/main/java --grpc-java_out=../user-service/src/main/java -I=. user_service.proto
-protoc --java_out=../inventory-service/src/main/java --grpc-java_out=../inventory-service/src/main/java -I=. inventory_service.proto
-protoc --java_out=../event-service/src/main/java --grpc-java_out=../event-service/src/main/java -I=. event_service.proto
+# Java outputs
+mkdir -p "$ROOT_DIR/user-service/src/main/java"
+mkdir -p "$ROOT_DIR/inventory-service/src/main/java"
+mkdir -p "$ROOT_DIR/event-service/src/main/java"
 
-# Generate Python stubs
-python3 -m grpc_tools.protoc -I=. --python_out=../gateway-fastapi/empuje --grpc_python_out=../gateway-fastapi/empuje user_service.proto
-python3 -m grpc_tools.protoc -I=. --python_out=../gateway-fastapi/empuje --grpc_python_out=../gateway-fastapi/empuje inventory_service.proto
-python3 -m grpc_tools.protoc -I=. --python_out=../gateway-fastapi/empuje --grpc_python_out=../gateway-fastapi/empuje event_service.proto
+if command -v protoc >/dev/null 2>&1; then
+  echo "protoc found"
+  if [ -f "$USER_PROTO" ]; then
+    protoc --java_out="$ROOT_DIR/user-service/src/main/java" --grpc-java_out="$ROOT_DIR/user-service/src/main/java" -I"$ROOT_DIR/user-service/src/main/proto" "$USER_PROTO"
+  fi
+  if [ -f "$INVENTORY_PROTO" ]; then
+    protoc --java_out="$ROOT_DIR/inventory-service/src/main/java" --grpc-java_out="$ROOT_DIR/inventory-service/src/main/java" -I"$ROOT_DIR/inventory-service/src/main/proto" "$INVENTORY_PROTO"
+  fi
+  if [ -f "$EVENT_PROTO" ]; then
+    protoc --java_out="$ROOT_DIR/event-service/src/main/java" --grpc-java_out="$ROOT_DIR/event-service/src/main/java" -I"$ROOT_DIR/event-service/src/main/proto" "$EVENT_PROTO"
+  fi
+else
+  echo "protoc not found on PATH; skipping Java generation"
+fi
 
-echo "Generated stubs for Java and Python"
+# Python stubs for gateway-fastapi
+if python3 -c "import grpc_tools.protoc" >/dev/null 2>&1; then
+  echo "grpc_tools.protoc found"
+  mkdir -p "$ROOT_DIR/gateway-fastapi/empuje"
+  if [ -f "$USER_PROTO" ]; then
+    python3 -m grpc_tools.protoc -I"$ROOT_DIR/user-service/src/main/proto" --python_out="$ROOT_DIR/gateway-fastapi" --grpc_python_out="$ROOT_DIR/gateway-fastapi" "$USER_PROTO"
+  fi
+  if [ -f "$INVENTORY_PROTO" ]; then
+    python3 -m grpc_tools.protoc -I"$ROOT_DIR/inventory-service/src/main/proto" --python_out="$ROOT_DIR/gateway-fastapi" --grpc_python_out="$ROOT_DIR/gateway-fastapi" "$INVENTORY_PROTO"
+  fi
+  if [ -f "$EVENT_PROTO" ]; then
+    python3 -m grpc_tools.protoc -I"$ROOT_DIR/event-service/src/main/proto" --python_out="$ROOT_DIR/gateway-fastapi" --grpc_python_out="$ROOT_DIR/gateway-fastapi" "$EVENT_PROTO"
+  fi
+else
+  echo "grpc_tools.protoc not available in Python env; skipping Python generation"
+fi
+
+echo "Done."

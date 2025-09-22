@@ -166,13 +166,12 @@ message RoleResponse {
   bool is_active = 5;              // Estado del rol
 }
 
-// Definición de roles del sistema según enunciado del TP
+// Definición de roles del sistema
 enum SystemRole {
   ROLE_UNSPECIFIED = 0;
-  PRESIDENTE = 1;
-  VOCAL = 2;
-  COORDINADOR = 3;
-  VOLUNTARIO = 4;
+  ROLE_ADMIN = 1;
+  ROLE_VOLUNTARIO = 2;
+  ROLE_DONANTE = 3;
 }
 
 // Mensaje para manejar respuestas genéricas

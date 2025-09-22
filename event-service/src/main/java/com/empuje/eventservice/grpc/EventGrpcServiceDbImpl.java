@@ -27,21 +27,24 @@ public class EventGrpcServiceDbImpl extends EventServiceGrpc.EventServiceImplBas
     @Override
     public void createEvent(CreateEventRequest request, StreamObserver<EventResponse> responseObserver) {
         try {
+            // Basic request validation
             if (request.getName().isEmpty() || !request.hasEventDatetime()) {
-                throw new IllegalArgumentException("Name and event_datetime are required");
+                throw new IllegalArgumentException("El nombre y la fecha/hora del evento son obligatorios");
             }
-            Instant when = toInstant(request.getEventDatetime());
-            if (when.isBefore(Instant.now())) {
-                responseObserver.onError(Status.FAILED_PRECONDITION.withDescription("Event datetime must be in the future").asRuntimeException());
-                return;
-            }
-            Event ev = Event.builder()
+            
+            // Convert protobuf timestamp to Instant
+            Instant eventDateTime = toInstant(request.getEventDatetime());
+            
+            // Create and validate the event
+            Event event = Event.builder()
                     .name(request.getName())
                     .description(request.getDescription())
-                    .eventDatetime(when)
+                    .eventDatetime(eventDateTime)
                     .active(true)
                     .build();
-            Event saved = eventRepository.save(ev);
+            
+            // The event will be validated by JPA/Hibernate validators before saving
+            Event saved = eventRepository.save(event);
             // participants optional
             for (long uid : request.getParticipantIdsList()) {
                 EventParticipant ep = EventParticipant.builder()

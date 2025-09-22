@@ -13,6 +13,7 @@ protos = [
     os.path.join(ROOT, 'event-service', 'src', 'main', 'proto', 'event_service.proto'),
 ]
 
+# include paths: project proto dirs + system proto paths if needed
 include_paths = [
     os.path.join(ROOT, 'user-service', 'src', 'main', 'proto'),
     os.path.join(ROOT, 'inventory-service', 'src', 'main', 'proto'),
@@ -28,6 +29,7 @@ common_args = [
 
 for proto in protos:
     args = common_args + [proto]
+    print("Generating:", proto)
     if protoc.main(args) != 0:
         raise SystemExit(f'Failed to generate stubs for {proto}')
 
