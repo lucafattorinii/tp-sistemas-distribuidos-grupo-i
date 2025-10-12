@@ -8,7 +8,7 @@ Sistema distribuido para la gestión de usuarios, inventario de donaciones y eve
 
 1. **Clonar el repositorio**
    ```bash
-   git clone https://github.com/tu-usuario/tp-sistemas-distribuidos-grupo-i.git
+   git clone https://github.com/lucafattorinii/tp-sistemas-distribuidos-grupo-i.git
    cd tp-sistemas-distribuidos-grupo-i
    ```
 
