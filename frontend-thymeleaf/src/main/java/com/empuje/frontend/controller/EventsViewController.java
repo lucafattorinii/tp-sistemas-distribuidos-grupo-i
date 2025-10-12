@@ -10,4 +10,9 @@ public class EventsViewController {
     public String eventsPage() {
         return "events";
     }
+
+    @GetMapping("/events/externos")
+    public String eventosExternos() {
+        return "events/externos";
+    }
 }
