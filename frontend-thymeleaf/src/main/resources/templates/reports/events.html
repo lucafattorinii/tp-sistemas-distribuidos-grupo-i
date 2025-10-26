@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Participación en Eventos - Sistema de Gestión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        .nav-link.active { background-color: #0d6efd; color: white; }
+        .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .event-card {
+            border-left: 4px solid #ffc107;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .filter-card {
+            border-left: 4px solid #17a2b8;
+        }
+        .success-message {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-badge">🟢 Sistema Activo - Informes GraphQL</div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div style="padding: 20px; text-align: center;">
+                        <h6>🚀 Sistema de Gestión</h6>
+                        <small class="text-muted">TP3 - GraphQL & REST</small>
+                    </div>
+                    <ul class="nav nav-pills flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/users">Usuarios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/inventory">Inventario</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/events">Eventos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/events/externos">Eventos Externos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/reports/donations">📊 Informe Donaciones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/reports/events">📈 Informe Eventos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/soap/presidents">👥 Consulta SOAP</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">📈 Informe de Participación en Eventos</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-success" onclick="exportToExcel()">📥 Excel</button>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="saveCustomFilter()">💾 Guardar Filtro</button>
+                            <button type="button" class="btn btn-sm btn-info" onclick="loadFilters()">📂 Mis Filtros</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card filter-card">
+                            <div class="card-header">
+                                <h6>🔍 Filtros de Búsqueda</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label for="startDateFilter" class="form-label">Fecha Desde *</label>
+                                        <input type="date" class="form-control" id="startDateFilter" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="date" class="form-control" id="endDateFilter" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <div>
+                                            <button type="button" class="btn btn-primary" onclick="applyFilters()">🔍 Buscar</button>
+                                            <button type="button" class="btn btn-secondary" onclick="clearFilters()">🗑️ Limpiar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5>📋 Eventos Participados</h5>
+                                <span class="badge bg-info" id="resultsCount">0 eventos</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="eventsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Evento</th>
+                                                <th>Descripción</th>
+                                                <th>Con Donaciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="eventsTableBody">
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>🔧 Información Técnica - GraphQL</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Query:</strong><br>
+                                        <code>eventParticipationReport(input: {...})</code><br>
+                                        <strong>Endpoint:</strong> http://localhost:8085/graphql
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Características:</strong><br>
+                                        - Filtros por fechas obligatorios<br>
+                                        - Participación en eventos<br>
+                                        - Estadísticas básicas
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentFilters = {};
+        let savedFilters = [];
+
+        function applyFilters() {
+            const startDate = document.getElementById('startDateFilter').value;
+            const endDate = document.getElementById('endDateFilter').value;
+
+            if (!startDate || !endDate) {
+                alert('⚠️ Las fechas son obligatorias');
+                return;
+            }
+
+            console.log('Aplicando filtros de fechas:', startDate, endDate);
+            loadEventData(startDate, endDate);
+        }
+
+        function loadEventData(startDate, endDate) {
+            const mockData = [
+                {
+                    year: 2024,
+                    month: 12,
+                    eventDate: '2024-12-15T10:00:00',
+                    eventName: 'Colecta de Alimentos',
+                    eventDescription: 'Recolección de alimentos no perecederos',
+                    hasDonationDistribution: true
+                },
+                {
+                    year: 2024,
+                    month: 12,
+                    eventDate: '2024-12-20T14:00:00',
+                    eventName: 'Jornada de Voluntariado',
+                    eventDescription: 'Actividades comunitarias',
+                    hasDonationDistribution: false
+                }
+            ];
+
+            displayResults(mockData);
+        }
+
+        function displayResults(data) {
+            document.getElementById('resultsCount').textContent = `${data.length} eventos`;
+
+            const tbody = document.getElementById('eventsTableBody');
+            tbody.innerHTML = '';
+
+            data.forEach(event => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(event.eventDate).toLocaleDateString()}</td>
+                    <td>${event.eventName}</td>
+                    <td>${event.eventDescription}</td>
+                    <td><span class="badge ${event.hasDonationDistribution ? 'bg-success' : 'bg-secondary'}">
+                        ${event.hasDonationDistribution ? 'Sí' : 'No'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('startDateFilter').value = '';
+            document.getElementById('endDateFilter').value = '';
+        }
+
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+        document.getElementById('startDateFilter').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('endDateFilter').value = lastDay.toISOString().split('T')[0];
+
+        applyFilters();
+    </script>
+</body>
+</html>

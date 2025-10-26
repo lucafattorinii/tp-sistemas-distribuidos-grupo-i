@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Presidentes y ONGs - Sistema de Gestión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+        .nav-link.active { background-color: #0d6efd; color: white; }
+        .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .soap-card {
+            border-left: 4px solid #dc3545;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .president-card {
+            border-left: 4px solid #198754;
+        }
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-badge">🟢 Sistema Activo - Cliente SOAP</div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div style="padding: 20px; text-align: center;">
+                        <h6>🚀 Sistema de Gestión</h6>
+                        <small class="text-muted">TP3 - SOAP Client</small>
+                    </div>
+                    <ul class="nav nav-pills flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/users">Usuarios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/inventory">Inventario</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/events">Eventos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/events/externos">Eventos Externos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/reports/donations">📊 Informe Donaciones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/reports/events">📈 Informe Eventos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/soap/presidents">👥 Consulta SOAP</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">👥 Consulta de Presidentes y ONGs</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="consultPresidents()">🔍 Consultar Presidentes</button>
+                            <button type="button" class="btn btn-sm btn-success" onclick="consultOrganizations()">🏢 Consultar ONGs</button>
+                            <button type="button" class="btn btn-sm btn-info" onclick="clearResults()">🗑️ Limpiar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Section -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>📝 IDs de Organizaciones</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="organizationIds" class="form-label">Ingrese los IDs de las organizaciones separados por coma:</label>
+                                    <textarea class="form-control" id="organizationIds" rows="3"
+                                              placeholder="Ejemplo: org-001, org-002, org-003"></textarea>
+                                </div>
+                                <div class="alert alert-info">
+                                    <small>💡 <strong>Endpoint SOAP:</strong> https://soap-app-latest.onrender.com/?wsdl<br>
+                                           Se consultarán los presidentes y datos de las ONGs especificadas.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading indicator -->
+                <div class="row mb-4" id="loadingSection" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Consultando servicio SOAP...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Presidents Results -->
+                <div class="row mb-4" id="presidentsSection" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="card soap-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">👨‍💼 Presidentes de ONGs</h5>
+                                <span class="badge bg-light text-dark" id="presidentsCount">0 presidentes</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="presidentsResults">
+                                    <!-- Los resultados de presidentes se cargarán aquí -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4" id="organizationsSection" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="card soap-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">🏢 Datos de ONGs</h5>
+                                <span class="badge bg-light text-dark" id="organizationsCount">0 organizaciones</span>
+                            </div>
+                            <div class="card-body">
+                                <div id="organizationsResults">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4" id="soapDetailsSection" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>🔧 Detalles de la Consulta SOAP</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>📤 Request SOAP</h6>
+                                        <pre id="soapRequest" class="bg-light p-3 rounded"></pre>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>📥 Response SOAP</h6>
+                                        <pre id="soapResponse" class="bg-light p-3 rounded"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6>🔧 Información Técnica - Cliente SOAP</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Web Service:</strong><br>
+                                        - WSDL: https://soap-app-latest.onrender.com/?wsdl<br>
+                                        - Protocolo: SOAP 1.1<br>
+                                        <strong>Operaciones: list_presidents, list_associations</strong><br>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Características:</strong><br>
+                                        - Solo acceso para PRESIDENTE<br>
+                                        - Cliente implementado en Java<br>
+                                        - Integración con red de ONGs<br>
+                                        - Respuestas en formato XML
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function consultPresidents() {
+            const idsText = document.getElementById('organizationIds').value.trim();
+            if (!idsText) {
+                alert('⚠️ Debe ingresar al menos un ID de organización');
+                return;
+            }
+
+            const organizationIds = idsText.split(',').map(id => id.trim()).filter(id => id.length > 0);
+
+            showLoading();
+            hideResults();
+
+            fetch('/api/soap/presidents', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    organizationIds: organizationIds
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayPresidentsResults(data);
+                displaySoapDetails(data.soapRequest, data.soapResponse);
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error consultando presidentes: ' + error.message);
+                hideLoading();
+            });
+        }
+
+        function consultOrganizations() {
+            const idsText = document.getElementById('organizationIds').value.trim();
+            if (!idsText) {
+                alert('⚠️ Debe ingresar al menos un ID de organización');
+                return;
+            }
+
+            const organizationIds = idsText.split(',').map(id => id.trim()).filter(id => id.length > 0);
+
+            showLoading();
+            hideResults();
+
+            fetch('/api/soap/organizations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    organizationIds: organizationIds
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayOrganizationsResults(data);
+                displaySoapDetails(data.soapRequest, data.soapResponse);
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('❌ Error consultando organizaciones: ' + error.message);
+                hideLoading();
+            });
+        }
+
+        function displayPresidentsResults(data) {
+            const section = document.getElementById('presidentsSection');
+            const container = document.getElementById('presidentsResults');
+            const counter = document.getElementById('presidentsCount');
+
+            container.innerHTML = '';
+            counter.textContent = `${data.presidents.length} presidentes`;
+
+            data.presidents.forEach(president => {
+                const card = document.createElement('div');
+                card.className = 'card president-card mb-3';
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="card-title">👨‍💼 ${president.name}</h6>
+                                <p class="card-text mb-1">
+                                    <strong>📞 Teléfono:</strong> ${president.phone}<br>
+                                    <strong>🏢 ID Organización:</strong> ${president.organizationId}<br>
+                                    <strong>ID:</strong> ${president.id}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-info" onclick="viewOrganization('${president.organizationId}')">
+                                    🏢 Ver ONG
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            section.style.display = 'block';
+        }
+
+        function displayOrganizationsResults(data) {
+            const section = document.getElementById('organizationsSection');
+            const container = document.getElementById('organizationsResults');
+            const counter = document.getElementById('organizationsCount');
+
+            container.innerHTML = '';
+            counter.textContent = `${data.organizations.length} organizaciones`;
+
+            data.organizations.forEach(org => {
+                const card = document.createElement('div');
+                card.className = 'card mb-3';
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="card-title">🏢 ${org.name}</h6>
+                                <p class="card-text mb-1">
+                                    <strong>📍 Dirección:</strong> ${org.address}<br>
+                                    <strong>📞 Teléfono:</strong> ${org.phone}<br>
+                                    <strong>ID:</strong> ${org.id}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-sm btn-warning" onclick="copyContactInfo('${org.name}', 'No disponible', '${org.phone}')">
+                                    📋 Copiar Info
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            section.style.display = 'block';
+        }
+
+        function displaySoapDetails(request, response) {
+            document.getElementById('soapRequest').textContent = request;
+            document.getElementById('soapResponse').textContent = response;
+            document.getElementById('soapDetailsSection').style.display = 'block';
+        }
+
+        function showLoading() {
+            document.getElementById('loadingSection').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingSection').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('presidentsSection').style.display = 'none';
+            document.getElementById('organizationsSection').style.display = 'none';
+            document.getElementById('soapDetailsSection').style.display = 'none';
+        }
+
+        function clearResults() {
+            document.getElementById('organizationIds').value = '';
+            hideResults();
+        }
+
+        function contactPresident(email, name) {
+            const subject = encodeURIComponent('Contacto desde Empuje Comunitario');
+            const body = encodeURIComponent(`Estimado/a ${name},\n\nNos ponemos en contacto desde Empuje Comunitario...`);
+            window.open(`mailto:${email}?subject=${subject}&body=${body}`);
+        }
+
+        function viewOrganization(orgId) {
+            document.getElementById('organizationIds').value = orgId;
+            consultOrganizations();
+        }
+
+        function visitWebsite(url) {
+            window.open(url, '_blank');
+        }
+
+        function copyContactInfo(name, email, phone) {
+            const info = `Organización: ${name}\nEmail: ${email}\nTeléfono: ${phone}`;
+            navigator.clipboard.writeText(info).then(() => {
+                alert('📋 Información copiada al portapapeles');
+            });
+        }
+
+        document.getElementById('organizationIds').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    </script>
+</body>
+</html>

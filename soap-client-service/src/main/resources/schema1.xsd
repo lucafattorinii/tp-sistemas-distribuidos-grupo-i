@@ -1,0 +1,23 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: soap-client-service
+
+  security:
+    require-ssl: false
+
+logging:
+  level:
+    com.empuje.soap: DEBUG
+    org.springframework.ws: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
