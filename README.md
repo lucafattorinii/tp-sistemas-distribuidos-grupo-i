@@ -58,9 +58,9 @@ Si necesitas regenerar los secretos:
 - **Frontend**: `frontend-thymeleaf/` (Spring Boot + Thymeleaf)
 - **API Gateway**: `gateway-fastapi/` (FastAPI - Python). Expone REST y mapea a gRPC
 - **Servicios gRPC** (Java/Spring Boot):
-  - `user-service/`: usuarios y autenticación (puerto gRPC 50051)
+  - `user-service/`: usuarios, autenticación y eventos (puerto gRPC 50051)
   - `inventory-service/`: inventario (puerto gRPC 50052)
-  - `event-service/`: eventos (puerto gRPC 50053)
+  - `messaging-service-kafka/`: mensajería y Kafka (puerto gRPC 50054)
 - **Base de datos**: MySQL (contenedor `db`)
 
 ## Requisitos
@@ -75,9 +75,9 @@ Si necesitas regenerar los secretos:
 .
 ├── gateway-fastapi/          # FastAPI REST → gRPC + JWT/roles
 ├── frontend-thymeleaf/       # UI (login, usuarios, inventario, eventos)
-├── user-service/             # gRPC usuarios (Spring Boot + JPA + Flyway)
+├── user-service/             # gRPC usuarios y eventos (Spring Boot + JPA + Flyway)
 ├── inventory-service/        # gRPC inventario (Spring Boot + JPA + Flyway)
-├── event-service/            # gRPC eventos (Spring Boot + JPA + Flyway)
+├── messaging-service-kafka/  # gRPC mensajería y Kafka (Spring Boot + JPA + Flyway)
 ├── db/                       # SQL inicial de referencia
 └── docker-compose.yml        # Orquestación
 ```
@@ -178,9 +178,3 @@ curl -s -X POST http://localhost:8000/events \
   -H 'Content-Type: application/json' -H "Authorization: Bearer $JWT" \
   -d '{"name":"Visita escuela 99","description":"Juegos","event_datetime":"2025-12-01T15:00:00"}'
 ```
-
-## Notas
-
-- `gateway-fastapi/generate_stubs.py` genera stubs Python desde los `.proto` de cada servicio hacia `gateway-fastapi/pb/`.
-- En `user-service` la clase `UserGrpcService.java` es de referencia y está comentada para que el IDE no marque errores. La implementación activa es `UserGrpcServiceImpl`.
-- Si configurás correo en `user-service` (`spring.mail.*`), el alta puede enviar emails reales.

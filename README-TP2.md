@@ -25,9 +25,9 @@ docker compose ps
 ##  Servicios Implementados
 
 ### **Core Services (TP1)**
-- **user-service** (puerto 50051) - Gestión de usuarios
+- **user-service** (puerto 50051) - Gestión de usuarios y eventos
 - **inventory-service** (puerto 50052) - Gestión de inventario
-- **event-service** (puerto 50053) - Gestión de eventos
+- **messaging-service-kafka** (puerto 50054) - Mensajería y Kafka
 - **gateway-fastapi** (puerto 8000) - API Gateway REST
 - **frontend** (puerto 8080) - Interfaz web
 
