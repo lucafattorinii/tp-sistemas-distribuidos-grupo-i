@@ -12,6 +12,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,15 +28,30 @@ public class ExcelExportService {
         List<DonationRecord> records = reportDataService.getDonationRecords(request);
 
         try (Workbook workbook = new XSSFWorkbook()) {
-            Sheet sheet = workbook.createSheet("Donaciones");
-            createHeaderRow(sheet);
-            fillDataRows(sheet, records);
 
-            for (int i = 0; i < 7; i++) {
-                sheet.autoSizeColumn(i);
+            // Agrupar registros por categoría
+            Map<String, List<DonationRecord>> recordsByCategory = records.stream()
+                    .collect(Collectors.groupingBy(DonationRecord::getCategory));
+
+            // Crear una hoja por cada categoría
+            for (Map.Entry<String, List<DonationRecord>> entry : recordsByCategory.entrySet()) {
+                String category = entry.getKey();
+                List<DonationRecord> categoryRecords = entry.getValue();
+
+                Sheet sheet = workbook.createSheet(category);
+                createHeaderRow(sheet);
+                fillDataRows(sheet, categoryRecords);
+                autoSizeColumns(sheet);
             }
 
             return writeWorkbookToBytes(workbook);
+        }
+    }
+
+    private void autoSizeColumns(Sheet sheet) {
+        int columnCount = sheet.getRow(0).getPhysicalNumberOfCells();
+        for (int i = 0; i < columnCount; i++) {
+            sheet.autoSizeColumn(i);
         }
     }
 
@@ -76,18 +93,6 @@ public class ExcelExportService {
             row.createCell(5).setCellValue(record.getModifiedBy() != null ? record.getModifiedBy() : "");
             row.createCell(6).setCellValue(record.getOrganizationId() != null ? record.getOrganizationId() : "");
         }
-    }
-
-    private CellStyle createHeaderStyle(Workbook workbook) {
-        CellStyle headerStyle = workbook.createCellStyle();
-        Font headerFont = workbook.createFont();
-        headerFont.setBold(true);
-        headerFont.setColor(IndexedColors.WHITE.getIndex());
-        headerStyle.setFont(headerFont);
-        headerStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
-        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        headerStyle.setAlignment(HorizontalAlignment.CENTER);
-        return headerStyle;
     }
 
     private byte[] writeWorkbookToBytes(Workbook workbook) throws IOException {

@@ -74,8 +74,9 @@ query {
 
 #### **Características:**
 - ✅ Exportación de donaciones a Excel
+- ✅ **Hojas separadas por categoría** (ROPA, ALIMENTOS, etc.)
 - ✅ Headers descriptivos en español
-- ✅ Formato básico
+- ✅ Formato profesional
 
 ### 3. Cliente SOAP para Red de ONGs
 
@@ -273,3 +274,25 @@ curl -X POST "http://localhost:8087/api/soap/presidents" \
 - **API Gateway:** FastAPI (Python)
 
 ---
+
+```
+
+### ✅ Checklist de Entrega
+
+- [x] **Servicio GraphQL implementado** (Informe de donaciones)
+- [x] **Servicio REST implementado con Swagger** (Exportación Excel)
+- [x] **Cliente SOAP implementado** (Consulta de presidentes y ONGs)
+- [x] **Frontend Thymeleaf actualizado** (Reportes y SOAP)
+- [x] **Docker compose configurado** (Nuevos servicios)
+- [x] **Gateway actualizado** (Proxies para nuevos servicios)
+- [x] **Documentación básica** (README-TP3.md)
+- [x] **Funcionalidades probadas** (Postman collection incluida)
+
+---
+
+## ❌ Funcionalidades NO implementadas en esta versión
+
+- [ ] **Filtros personalizados guardados** (GraphQL mutations)
+- [ ] **Informe de participación en eventos** (GraphQL)
+- [ ] **Filtros personalizados para eventos** (REST API)
+- [ ] **Sistema completo de filtros CRUD** (solo exportación implementada)
