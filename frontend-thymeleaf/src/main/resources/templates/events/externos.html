@@ -45,14 +45,12 @@
                                 <h5>Eventos de Otras Organizaciones</h5>
                             </div>
                             <div class="card-body">
-                                <!-- Aquí se mostrarían los eventos externos -->
                                 <div class="alert alert-info">
                                     <h6>Funcionalidad en Desarrollo</h6>
                                     <p>Esta interfaz mostrará los eventos publicados por otras organizaciones de la red.</p>
                                     <p>Los eventos externos se sincronizan automáticamente mediante Apache Kafka.</p>
                                 </div>
 
-                                <!-- Ejemplo de cómo se mostrarían los eventos -->
                                 <div class="row mt-4" style="display: none;" id="events-container">
                                     <div class="col-md-6 mb-3" th:each="event : ${externalEvents}">
                                         <div class="card">
@@ -90,18 +88,16 @@
             const eventId = button.getAttribute('data-event-id');
             const organizerId = button.getAttribute('data-organizer-id');
             
-            // Datos del voluntario (en un caso real vendrían del login del usuario)
             const volunteerData = {
                 eventId: eventId,
-                volunteerOrganizationId: "empuje-org-001", // ID de nuestra organización
-                volunteerId: "user-123", // ID del usuario logueado
+                volunteerOrganizationId: "empuje-org-001",
+                volunteerId: "user-123",
                 volunteerName: "Juan",
                 volunteerLastName: "Pérez", 
                 volunteerPhone: "123456789",
                 volunteerEmail: "juan.perez@empuje.org"
             };
             
-            // Hacer la llamada al servicio de mensajería
             fetch(`/api/messaging/adhesion-evento/${organizerId}`, {
                 method: 'POST',
                 headers: {

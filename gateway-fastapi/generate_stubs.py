@@ -10,14 +10,12 @@ os.makedirs(OUT_DIR, exist_ok=True)
 protos = [
     os.path.join(ROOT, 'user-service', 'src', 'main', 'proto', 'user_service.proto'),
     os.path.join(ROOT, 'inventory-service', 'src', 'main', 'proto', 'inventory_service.proto'),
-    os.path.join(ROOT, 'event-service', 'src', 'main', 'proto', 'event_service.proto'),
 ]
 
 # include paths: project proto dirs + system proto paths if needed
 include_paths = [
     os.path.join(ROOT, 'user-service', 'src', 'main', 'proto'),
     os.path.join(ROOT, 'inventory-service', 'src', 'main', 'proto'),
-    os.path.join(ROOT, 'event-service', 'src', 'main', 'proto'),
 ]
 
 common_args = [

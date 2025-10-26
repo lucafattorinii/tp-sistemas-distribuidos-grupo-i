@@ -66,7 +66,7 @@ public class User extends BaseEntity implements UserDetails {
     private String lastName;
 
     @Transient
-    private String roleName; // Transient field to expose role name in JSON
+    private String roleName;
 
     @Column(name = "dni", length = 20)
     private String dni;
@@ -109,10 +109,6 @@ public class User extends BaseEntity implements UserDetails {
         this.lastLoginDate = lastLoginDate;
     }
     
-    /**
-     * Sets the last login timestamp using an Instant.
-     * @param lastLogin the instant when the user last logged in
-     */
     public void setLastLogin(Instant lastLogin) {
         this.lastLoginDate = lastLogin != null ? lastLogin.atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
     }
@@ -125,17 +121,13 @@ public class User extends BaseEntity implements UserDetails {
         this.lastPasswordResetDate = lastPasswordResetDate;
     }
     
-    /**
-     * Sets the password reset token expiry using an Instant.
-     * @param expiry the instant when the password reset token expires
-     */
     public void setPasswordResetTokenExpiry(Instant expiry) {
         this.passwordResetExpires = expiry != null ? expiry.atZone(ZoneId.systemDefault()).toLocalDateTime() : null;
     }
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // To handle lazy loading
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Role role;
 
     @Column(name = "is_active", nullable = false)
@@ -186,7 +178,6 @@ public class User extends BaseEntity implements UserDetails {
     }
 
     
-    // Builder pattern implementation
     public static Builder builder() {
         return new Builder();
     }
@@ -280,23 +271,14 @@ public class User extends BaseEntity implements UserDetails {
         }
         
         public User build() {
-            // Any default values can be set here if needed
             return user;
         }
     }
 
-    /**
-     * Checks if the user account is fully active.
-     * @return true if the account is enabled and not expired, locked, or credentials expired
-     */
     public boolean isActive() {
         return isEnabled() && isAccountNonExpired() && isAccountNonLocked() && isCredentialsNonExpired();
     }
 
-    /**
-     * Gets the name of the user's role.
-     * @return the role name or empty string if not set
-     */
     public String getRoleName() {
         if (roleName == null && role != null && role.getName() != null) {
             roleName = role.getName().name();
@@ -304,19 +286,10 @@ public class User extends BaseEntity implements UserDetails {
         return roleName != null ? roleName : "";
     }
 
-    /**
-     * Checks if the user has the specified role.
-     * @param systemRole the role to check
-     * @return true if the user has the role, false otherwise
-     */
     public boolean hasRole(SystemRole systemRole) {
         return role != null && role.getName() != null && role.getName().equals(systemRole);
     }
 
-    /**
-     * Returns the user's full name by combining first and last name
-     * @return the full name of the user
-     */
     public String getFullName() {
         return (firstName != null ? firstName : "") + 
                (lastName != null ? " " + lastName : "").trim();

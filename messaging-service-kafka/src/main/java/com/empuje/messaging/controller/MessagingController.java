@@ -17,6 +17,10 @@ import java.util.UUID;
 public class MessagingController {
 
     private final EventParticipationProducer eventParticipationProducer;
+    private final DonationRequestProducer donationRequestProducer;
+    private final DonationTransferProducer donationTransferProducer;
+    private final DonationOfferProducer donationOfferProducer;
+    private final ExternalEventProducer externalEventProducer;
 
     @PostMapping("/solicitud-donaciones")
     public ResponseEntity<String> publicarSolicitudDonaciones(

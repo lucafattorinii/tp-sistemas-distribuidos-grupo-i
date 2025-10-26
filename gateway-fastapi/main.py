@@ -29,7 +29,7 @@ except Exception:
 
 USER_SERVICE_ADDR = os.getenv("USER_SERVICE_URL", "localhost:50051")
 INVENTORY_SERVICE_ADDR = os.getenv("INVENTORY_SERVICE_URL", "localhost:50052")
-EVENT_SERVICE_ADDR = os.getenv("EVENT_SERVICE_URL", "localhost:50053")
+MESSAGING_SERVICE_ADDR = os.getenv("MESSAGING_SERVICE_URL", "localhost:50054")
 JWT_SECRET = os.getenv("JWT_SECRET", "your_jwt_secret_key_here")
 
 app = FastAPI(title="Gateway FastAPI - Empuje Comunitario")
@@ -83,7 +83,6 @@ def login(payload: LoginIn):
                 stub = user_grpc.UserServiceStub(channel)
                 req = user_pb.LoginRequest(username=payload.username, password=payload.password)
                 resp = stub.Login(req)
-                # Embed role in JWT from user response if present
                 role = "VOLUNTARIO"
                 try:
                     role = resp.user.role.name or role
@@ -97,19 +96,18 @@ def login(payload: LoginIn):
                 raise HTTPException(status_code=401, detail="Invalid credentials")
             raise HTTPException(status_code=502, detail=f"gRPC error: {code.name}")
 
-
 # Volunteer self-service participation endpoints
 @app.post("/events/{event_id}/participate")
 def events_participate(event_id: int, payload=Depends(require_auth)):
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
     user_id = payload.get("uid")
     if not user_id:
         raise HTTPException(status_code=400, detail="Token missing uid")
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
         try:
-            resp = stub.AssignMember(evt_pb.AssignMemberRequest(event_id=event_id, user_id=int(user_id), assigned_by=int(user_id)))
+            resp = stub.AssignMember(user_pb.AssignMemberRequest(event_id=event_id, user_id=int(user_id), assigned_by=int(user_id)))
             return {"id": resp.id}
         except grpc.RpcError as e:
             code = e.code()
@@ -120,15 +118,15 @@ def events_participate(event_id: int, payload=Depends(require_auth)):
 
 @app.post("/events/{event_id}/leave")
 def events_leave(event_id: int, payload=Depends(require_auth)):
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
     user_id = payload.get("uid")
     if not user_id:
         raise HTTPException(status_code=400, detail="Token missing uid")
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
         try:
-            resp = stub.RemoveMember(evt_pb.RemoveMemberRequest(event_id=event_id, user_id=int(user_id), removed_by=int(user_id)))
+            resp = stub.RemoveMember(user_pb.RemoveMemberRequest(event_id=event_id, user_id=int(user_id), removed_by=int(user_id)))
             return {"id": resp.id}
         except grpc.RpcError as e:
             code = e.code()
@@ -197,10 +195,6 @@ def delete_user(user_id: int):
             if code == grpc.StatusCode.NOT_FOUND:
                 raise HTTPException(status_code=404, detail="User not found")
             raise HTTPException(status_code=502, detail=f"gRPC error: {code.name}")
-
-    # Fallback mock (only if stubs not present) to allow UI testing
-    token = jwt.encode({"sub": payload.username, "uid": 1, "role": "PRESIDENTE"}, JWT_SECRET, algorithm="HS256")
-    return {"jwt": token, "user": {"id": 1, "username": payload.username, "role": "PRESIDENTE"}}
 
 
 # Users endpoints (PRESIDENTE)
@@ -348,13 +342,13 @@ def require_event_role(payload=Depends(require_auth)):
 
 @app.get("/events", dependencies=[Depends(require_auth)])
 def events_list():
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
         events = []
         try:
-            for resp in stub.ListEvents(evt_pb.ListEventsRequest()):
+            for resp in stub.ListEvents(user_pb.ListEventsRequest()):
                 events.append({"id": resp.id, "name": resp.name})
         except grpc.RpcError as e:
             raise HTTPException(status_code=502, detail=f"gRPC error: {e.code().name}")
@@ -363,7 +357,7 @@ def events_list():
 
 @app.post("/events", dependencies=[Depends(require_event_role)])
 def events_create(data: dict):
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
     # Expect ISO datetime in data["event_datetime"]
     from datetime import datetime, timezone
@@ -371,10 +365,10 @@ def events_create(data: dict):
     if not iso:
         raise HTTPException(status_code=400, detail="event_datetime is required (ISO)")
     dt = datetime.fromisoformat(iso)
-    ts = evt_pb.google_dot_protobuf_dot_timestamp__pb2.Timestamp(seconds=int(dt.replace(tzinfo=timezone.utc).timestamp()))
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
-        req = evt_pb.CreateEventRequest(name=data.get("name",""), description=data.get("description",""), event_datetime=ts)
+    ts = user_pb.google_dot_protobuf_dot_timestamp__pb2.Timestamp(seconds=int(dt.replace(tzinfo=timezone.utc).timestamp()))
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
+        req = user_pb.CreateEventRequest(name=data.get("name",""), description=data.get("description",""), event_datetime=ts)
         try:
             resp = stub.CreateEvent(req)
             return {"id": resp.id}
@@ -384,16 +378,16 @@ def events_create(data: dict):
 
 @app.put("/events/{event_id}", dependencies=[Depends(require_event_role)])
 def events_update(event_id: int, data: dict):
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
     from datetime import datetime, timezone
     ts = None
     if data.get("event_datetime"):
         dt = datetime.fromisoformat(data["event_datetime"])
-        ts = evt_pb.google_dot_protobuf_dot_timestamp__pb2.Timestamp(seconds=int(dt.replace(tzinfo=timezone.utc).timestamp()))
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
-        req = evt_pb.UpdateEventRequest(id=event_id, name=data.get("name",""), description=data.get("description",""))
+        ts = user_pb.google_dot_protobuf_dot_timestamp__pb2.Timestamp(seconds=int(dt.replace(tzinfo=timezone.utc).timestamp()))
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
+        req = user_pb.UpdateEventRequest(id=event_id, name=data.get("name",""), description=data.get("description",""))
         if ts:
             req.event_datetime.CopyFrom(ts)
         try:
@@ -410,12 +404,12 @@ def events_update(event_id: int, data: dict):
 
 @app.delete("/events/{event_id}", dependencies=[Depends(require_event_role)])
 def events_delete(event_id: int):
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
         try:
-            resp = stub.DeleteEvent(evt_pb.DeleteEventRequest(id=event_id, requested_by=0))
+            resp = stub.DeleteEvent(user_pb.DeleteEventRequest(id=event_id, requested_by=0))
             return {"success": resp.success, "message": resp.message}
         except grpc.RpcError as e:
             raise HTTPException(status_code=502, detail=f"gRPC error: {e.code().name}")
@@ -423,13 +417,13 @@ def events_delete(event_id: int):
 
 @app.post("/events/{event_id}/assign", dependencies=[Depends(require_event_role)])
 def events_assign(event_id: int, data: dict):
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
     user_id = int(data.get("user_id", 0))
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
         try:
-            resp = stub.AssignMember(evt_pb.AssignMemberRequest(event_id=event_id, user_id=user_id, assigned_by=0))
+            resp = stub.AssignMember(user_pb.AssignMemberRequest(event_id=event_id, user_id=user_id, assigned_by=0))
             return {"id": resp.id}
         except grpc.RpcError as e:
             code = e.code()
@@ -440,16 +434,75 @@ def events_assign(event_id: int, data: dict):
 
 @app.post("/events/{event_id}/remove", dependencies=[Depends(require_event_role)])
 def events_remove(event_id: int, data: dict):
-    if not (evt_grpc and evt_pb):
+    if not (user_grpc and user_pb):
         raise HTTPException(status_code=501, detail="gRPC stubs not generated")
     user_id = int(data.get("user_id", 0))
-    with grpc.insecure_channel(EVENT_SERVICE_ADDR) as channel:
-        stub = evt_grpc.EventServiceStub(channel)
+    with grpc.insecure_channel(USER_SERVICE_ADDR) as channel:
+        stub = user_grpc.EventServiceStub(channel)
         try:
-            resp = stub.RemoveMember(evt_pb.RemoveMemberRequest(event_id=event_id, user_id=user_id, removed_by=0))
+            resp = stub.RemoveMember(user_pb.RemoveMemberRequest(event_id=event_id, user_id=user_id, removed_by=0))
             return {"id": resp.id}
         except grpc.RpcError as e:
             code = e.code()
             if code == grpc.StatusCode.NOT_FOUND:
                 raise HTTPException(status_code=404, detail="Event not found")
             raise HTTPException(status_code=502, detail=f"gRPC error: {code.name}")
+
+
+# TP3 - New Services Routes
+import httpx
+
+# GraphQL Service proxy
+@app.api_route("/api/graphql/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_graphql(path: str, request: Request):
+    """Proxy para el servicio GraphQL de informes"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method=request.method,
+            url=f"http://donation-reports-service:8085/graphql/{path}",
+            headers=dict(request.headers),
+            content=body,
+            params=request.query_params
+        )
+        return Response(
+            content=response.content,
+            status_code=response.status_code,
+            headers=dict(response.headers)
+        )
+
+@app.api_route("/api/reports/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_reports(path: str, request: Request):
+    """Proxy para el servicio REST de filtros y exportación"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method=request.method,
+            url=f"http://report-filters-service:8086/api/filters/{path}",
+            headers=dict(request.headers),
+            content=body,
+            params=request.query_params
+        )
+        return Response(
+            content=response.content,
+            status_code=response.status_code,
+            headers=dict(response.headers)
+        )
+
+@app.api_route("/api/soap/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_soap(path: str, request: Request):
+    """Proxy para el servicio cliente SOAP"""
+    body = await request.body()
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            method=request.method,
+            url=f"http://soap-client-service:8087/api/soap/{path}",
+            headers=dict(request.headers),
+            content=body,
+            params=request.query_params
+        )
+        return Response(
+            content=response.content,
+            status_code=response.status_code,
+            headers=dict(response.headers)
+        )

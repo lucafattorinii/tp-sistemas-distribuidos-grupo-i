@@ -35,10 +35,6 @@ public class DonationOfferConsumer {
                    offerMessage.getDonationDescription(),
                    offerMessage.getQuantity());
 
-            // Aquí iría la lógica para:
-            // 1. Guardar la oferta en la base de datos
-            // 2. Mostrar en interfaz de ofertas disponibles
-
             acknowledgment.acknowledge();
             log.info("Oferta procesada exitosamente");
 

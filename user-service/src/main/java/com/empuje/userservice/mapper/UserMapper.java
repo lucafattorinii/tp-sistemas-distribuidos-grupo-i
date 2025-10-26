@@ -23,8 +23,8 @@ public interface UserMapper extends BaseMapper<User, UserDto> {
     UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
     
     @Override
-    @Mapping(target = "password", ignore = true) // Never map password from entity to DTO
-    @Mapping(target = "verificationToken", ignore = true) // Hide sensitive data
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "verificationToken", ignore = true)
     @Mapping(source = "role", target = "roleDetails")
     @Mapping(target = "createdAt", source = "createdAt")
     @Mapping(target = "updatedAt", source = "updatedAt")
@@ -32,7 +32,7 @@ public interface UserMapper extends BaseMapper<User, UserDto> {
     UserDto toDto(User user);
     
     @Override
-    @Mapping(target = "id", ignore = true) // ID is managed by the database
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
@@ -40,7 +40,7 @@ public interface UserMapper extends BaseMapper<User, UserDto> {
     @Mapping(target = "emailVerified", constant = "false")
     @Mapping(target = "active", constant = "true")
     @Mapping(source = "roleDetails", target = "role")
-    @Mapping(target = "lastLogin", ignore = true) // Managed by service
+    @Mapping(target = "lastLogin", ignore = true)
     User toEntity(UserDto userDto);
     
     @Override
@@ -49,16 +49,13 @@ public interface UserMapper extends BaseMapper<User, UserDto> {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
-    @Mapping(target = "email", ignore = true) // Email should not be updated this way
-    @Mapping(target = "password", ignore = true) // Password updates should use a dedicated method
-    @Mapping(target = "lastLogin", ignore = true) // Managed by service
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "lastLogin", ignore = true)
     @Mapping(source = "roleDetails", target = "role")
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateFromDto(UserDto userDto, @MappingTarget User user);
     
-    /**
-     * Updates only the user profile information (name, phone, etc.)
-     */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "password", ignore = true)
@@ -74,16 +71,10 @@ public interface UserMapper extends BaseMapper<User, UserDto> {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateProfileFromDto(UserDto userDto, @MappingTarget User user);
     
-    /**
-     * Maps a LocalDateTime to an Instant
-     */
     default Instant map(LocalDateTime dateTime) {
         return dateTime != null ? dateTime.atZone(ZoneId.systemDefault()).toInstant() : null;
     }
     
-    /**
-     * Maps an Instant to a LocalDateTime
-     */
     default LocalDateTime map(Instant instant) {
         return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
     }

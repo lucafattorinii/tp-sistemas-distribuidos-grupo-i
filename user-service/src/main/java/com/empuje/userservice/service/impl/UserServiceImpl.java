@@ -83,10 +83,8 @@ public class UserServiceImpl implements UserService {
     public UserDto createUser(UserDto userDto, Long createdBy) {
         log.info("Creating new user with username: {}", userDto.getUsername());
         
-        // Validate input
         validateUserDto(userDto);
         
-        // Check if username or email already exists
         if (userRepository.existsByUsername(userDto.getUsername())) {
             throw new BadRequestException(USERNAME_IN_USE);
         }
@@ -95,29 +93,23 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException(EMAIL_IN_USE);
         }
 
-        // Map DTO to entity
         User user = userMapper.toEntity(userDto);
         
-        // Set password
         String password = StringUtils.hasText(userDto.getPassword()) ? 
                 userDto.getPassword() : generateRandomPassword();
         user.setPassword(passwordEncoder.encode(password));
         
-        // Set role - default to ROLE_VOLUNTARIO if not specified
         SystemRole role = userDto.getRole() != null ? 
                 userDto.getRole() : SystemRole.ROLE_VOLUNTARIO;
         setUserRole(user, role);
         
-        // Set audit fields
         user.setActive(true);
         user.setEmailVerified(!requireEmailVerification);
         user.setCreatedBy(createdBy);
         
-        // Save user
         User savedUser = userRepository.save(user);
         log.info("Created user with id: {}", savedUser.getId());
         
-        // Send welcome email with credentials if email service is available
         if (emailService != null) {
             try {
                 emailService.sendUserRegistrationEmail(savedUser, password);
@@ -134,7 +126,6 @@ public class UserServiceImpl implements UserService {
     }
     
     private void setUserRole(User user, SystemRole systemRole) {
-        // Find the role by SystemRole
         Role role = roleRepository.findByName(systemRole)
             .orElseThrow(() -> new ResourceNotFoundException("Role", "name", systemRole.name()));
         user.setRole(role);
@@ -159,14 +150,12 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("Last name is required");
         }
         
-        // Validate email format
         if (!isValidEmail(userDto.getEmail())) {
             throw new BadRequestException("Invalid email format");
         }
     }
     
     private boolean isValidEmail(String email) {
-        // Simple email validation - consider using a proper email validator
         return email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
     }
 
@@ -178,19 +167,16 @@ public class UserServiceImpl implements UserService {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         
-        // Check if email is being updated and is already in use
         if (!existingUser.getEmail().equalsIgnoreCase(userDto.getEmail()) && 
                 userRepository.existsByEmailAndIdNot(userDto.getEmail(), id)) {
             throw new BadRequestException(EMAIL_IN_USE);
         }
         
-        // Check if username is being updated and is already in use
         if (!existingUser.getUsername().equalsIgnoreCase(userDto.getUsername()) && 
                 userRepository.existsByUsernameAndIdNot(userDto.getUsername(), id)) {
             throw new BadRequestException(USERNAME_IN_USE);
         }
         
-        // Update user fields
         existingUser.setUsername(userDto.getUsername());
         existingUser.setFirstName(userDto.getFirstName());
         existingUser.setLastName(userDto.getLastName());
@@ -199,17 +185,14 @@ public class UserServiceImpl implements UserService {
         existingUser.setAddress(userDto.getAddress());
         existingUser.setProfileImage(userDto.getProfileImage());
         
-        // Update role if provided
         if (userDto.getRole() != null) {
             setUserRole(existingUser, userDto.getRole());
         }
         
-        // Update password if provided
         if (StringUtils.hasText(userDto.getPassword())) {
             existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         }
         
-        // Update audit fields
         existingUser.setUpdatedBy(updatedBy);
         
         User updatedUser = userRepository.save(existingUser);
@@ -243,7 +226,6 @@ public class UserServiceImpl implements UserService {
         log.debug("Fetching all users with page: {}, size: {}", 
                 pageable.getPageNumber(), pageable.getPageSize());
                 
-        // Apply default sorting if not specified
         if (pageable.getSort().isUnsorted()) {
             pageable = PageRequest.of(
                 pageable.getPageNumber(),
@@ -270,11 +252,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         
-        // Soft delete by setting active to false
         user.setActive(false);
         user.setUpdatedBy(deletedBy);
         
-        // Invalidate any active sessions/tokens
         user.setLastPasswordResetDate(Instant.now());
         
         userRepository.save(user);
@@ -289,7 +269,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
         
-        // If activating, ensure the user has a verified email if required
         if (active && requireEmailVerification && !user.isEmailVerified()) {
             throw new BadRequestException("Cannot activate user with unverified email");
         }
@@ -297,7 +276,6 @@ public class UserServiceImpl implements UserService {
         user.setActive(active);
         user.setUpdatedBy(updatedBy);
         
-        // If deactivating, invalidate any active sessions/tokens
         if (!active) {
             user.setLastPasswordResetDate(Instant.now());
         }
@@ -321,31 +299,25 @@ public class UserServiceImpl implements UserService {
             
             SecurityContextHolder.getContext().setAuthentication(authentication);
             
-            // Get the authenticated user
             User user = (User) authentication.getPrincipal();
             
-            // Check if account is active
             if (!user.isActive()) {
                 throw new BadCredentialsException(ACCOUNT_DISABLED);
             }
             
-            // Check if email verification is required
             if (requireEmailVerification && !user.isEmailVerified()) {
                 throw new BadCredentialsException(EMAIL_VERIFICATION_REQUIRED);
             }
             
-            // Generate JWT token
             String jwt = tokenProvider.generateToken(authentication);
             
-            // Update last login timestamp
             user.setLastLogin(Instant.now());
             userRepository.save(user);
             
-            // Build response
             return JwtAuthenticationResponse.builder()
                     .accessToken(jwt)
                     .tokenType("Bearer")
-                    .expiresIn(jwtExpirationInMs / 1000) // Convert to seconds
+                    .expiresIn(jwtExpirationInMs / 1000)
                     .user(mapToDto(user))
                     .build();
                     
@@ -368,18 +340,15 @@ public class UserServiceImpl implements UserService {
         Random random = new Random();
         StringBuilder password = new StringBuilder(12);
         
-        // Asegurar al menos un carácter de cada conjunto
         password.append(upperCase.charAt(random.nextInt(upperCase.length())));
         password.append(lowerCase.charAt(random.nextInt(lowerCase.length())));
         password.append(numbers.charAt(random.nextInt(numbers.length())));
         password.append(specialChars.charAt(random.nextInt(specialChars.length())));
         
-        // Completar el resto
         for (int i = 4; i < 12; i++) {
             password.append(combined.charAt(random.nextInt(combined.length())));
         }
         
-        // Mezclar la contraseña para hacerla más aleatoria
         char[] passwordArray = password.toString().toCharArray();
         for (int i = 0; i < passwordArray.length; i++) {
             int randomIndex = random.nextInt(passwordArray.length);
@@ -409,11 +378,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
                 
-        // Get the role entity
         Role role = roleRepository.findByName(systemRole)
                 .orElseThrow(() -> new ResourceNotFoundException("Role", "name", systemRole.name()));
         
-        // Update the role
         user.setRole(role);
         user.setUpdatedBy(updatedBy);
         
@@ -430,8 +397,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
         
-        // In this implementation, a user has one role, but we return it as a Set for consistency
-        // with systems that support multiple roles per user
         return Set.of(roleMapper.toDto(user.getRole()));
     }
     
@@ -453,7 +418,6 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
         
-        // Update password
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setUpdatedBy(updatedBy);
         user.setLastPasswordResetDate(Instant.now());
@@ -461,8 +425,6 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         log.info("Password reset for user id: {}", userId);
         
-        // Invalidate any active sessions/tokens
-        // This is handled by checking lastPasswordResetDate in the JWT validation
     }
     
     @Override
@@ -472,14 +434,12 @@ public class UserServiceImpl implements UserService {
         
         return userRepository.findByEmail(email)
                 .map(user -> {
-                    // Generate a reset token
                     String resetToken = UUID.randomUUID().toString();
                     user.setPasswordResetToken(resetToken);
-                    user.setPasswordResetTokenExpiry(Instant.now().plusSeconds(24 * 60 * 60)); // 24 hours
+                    user.setPasswordResetTokenExpiry(Instant.now().plusSeconds(24 * 60 * 60));
                     
                     userRepository.save(user);
                     
-                    // Send email with reset link
                     try {
                         emailService.sendPasswordResetEmail(user, resetToken);
                         return true;
@@ -488,7 +448,7 @@ public class UserServiceImpl implements UserService {
                         return false;
                     }
                 })
-                .orElse(false); // Return false if user not found
+                .orElse(false);
     }
     
     @Override

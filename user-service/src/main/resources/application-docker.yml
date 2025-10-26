@@ -50,7 +50,6 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
-# Actuator for health checks
 management:
   endpoint:
     health:

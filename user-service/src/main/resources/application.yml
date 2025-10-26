@@ -50,9 +50,9 @@ grpc:
 app:
   jwt:
     secret: ${JWT_SECRET:your-256-bit-secret}
-    expiration-ms: 86400000 # 24 hours
+    expiration-ms: 86400000
   password:
-    reset-token-expiration-ms: 3600000 # 1 hour
+    reset-token-expiration-ms: 3600000
   frontend-url: http://localhost:8080
 
 logging:
@@ -64,7 +64,6 @@ logging:
     org.springframework.security: DEBUG
 
 ---
-# Test configuration
 spring:
   config:
     activate:
@@ -72,7 +71,7 @@ spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
-    password: 
+    password:
     driver-class-name: org.h2.Driver
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
