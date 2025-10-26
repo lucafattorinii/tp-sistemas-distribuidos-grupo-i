@@ -137,6 +137,34 @@
                     </div>
                 </div>
 
+                <!-- Filtros Guardados -->
+                <div class="row mb-4" id="savedFiltersSection" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6>💾 Filtros Personalizados</h6>
+                                <div>
+                                    <button type="button" class="btn btn-success btn-sm" onclick="saveCurrentFilter()">💾 Guardar Filtros</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSavedFilters()">👁️ Ver/Ocultar</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="savedFiltersList">
+                                    <!-- Aquí se mostrarán los filtros guardados -->
+                                </div>
+                                <div id="saveFilterForm" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="filterName" class="form-label">Nombre del Filtro</label>
+                                        <input type="text" class="form-control" id="filterName" placeholder="Ej: Alimentos Activos">
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="confirmSaveFilter()">✅ Guardar</button>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelSaveFilter()">❌ Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row mb-4">
                     <div class="col-md-12">
                         <div class="card">
@@ -263,6 +291,126 @@
 
         function exportToExcel() {
             alert('📥 Exportando a Excel...\n\nSe descargará el archivo con los filtros aplicados.');
+        }
+
+        function toggleSavedFilters() {
+            const section = document.getElementById('savedFiltersSection');
+            const button = event.target;
+
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                button.textContent = '👁️ Ocultar';
+                loadSavedFilters();
+            } else {
+                section.style.display = 'none';
+                button.textContent = '👁️ Ver';
+            }
+        }
+
+        function saveCurrentFilter() {
+            const form = document.getElementById('saveFilterForm');
+            const list = document.getElementById('savedFiltersList');
+
+            list.style.display = 'none';
+            form.style.display = 'block';
+        }
+
+        function cancelSaveFilter() {
+            const form = document.getElementById('saveFilterForm');
+            const list = document.getElementById('savedFiltersList');
+
+            form.style.display = 'none';
+            list.style.display = 'block';
+            document.getElementById('filterName').value = '';
+        }
+
+        function confirmSaveFilter() {
+            const filterName = document.getElementById('filterName').value.trim();
+
+            if (!filterName) {
+                alert('⚠️ Debe ingresar un nombre para el filtro');
+                return;
+            }
+
+            const currentFilters = {
+                name: filterName,
+                filterType: 'DONATION',
+                category: document.getElementById('categoryFilter').value,
+                startDate: document.getElementById('startDateFilter').value,
+                endDate: document.getElementById('endDateFilter').value,
+                isDeleted: document.getElementById('deletedFilter').value
+            };
+
+            console.log('Guardando filtro:', currentFilters);
+
+            alert(`💾 Filtro "${filterName}" guardado exitosamente!\n\nFiltros aplicados:\n- Categoría: ${currentFilters.category || 'Todas'}\n- Fechas: ${currentFilters.startDate || 'Sin límite'} - ${currentFilters.endDate || 'Sin límite'}\n- Estado: ${currentFilters.isDeleted || 'Ambos'}`);
+
+            cancelSaveFilter();
+            loadSavedFilters();
+        }
+
+        function loadSavedFilters() {
+            const savedFilters = [
+                { id: 1, name: 'Alimentos Activos', filterType: 'DONATION', category: 'ALIMENTOS', isDeleted: false },
+                { id: 2, name: 'Ropa Diciembre', filterType: 'DONATION', category: 'ROPA', startDate: '2024-12-01', endDate: '2024-12-31' }
+            ];
+
+            const container = document.getElementById('savedFiltersList');
+            container.innerHTML = '';
+
+            if (savedFilters.length === 0) {
+                container.innerHTML = '<p class="text-muted">No hay filtros guardados</p>';
+                return;
+            }
+
+            savedFilters.forEach(filter => {
+                const div = document.createElement('div');
+                div.className = 'd-flex justify-content-between align-items-center mb-2 p-2 border rounded';
+                div.innerHTML = `
+                    <div>
+                        <strong>${filter.name}</strong><br>
+                        <small class="text-muted">
+                            Categoría: ${filter.category || 'Todas'} |
+                            Estado: ${filter.isDeleted === null ? 'Ambos' : (filter.isDeleted ? 'Eliminados' : 'Activos')}
+                        </small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-primary me-1" onclick="applySavedFilter(${filter.id})">🔍 Usar</button>
+                        <button class="btn btn-sm btn-warning me-1" onclick="editSavedFilter(${filter.id})">✏️ Editar</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSavedFilter(${filter.id})">🗑️ Eliminar</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function applySavedFilter(filterId) {
+            const savedFilters = [
+                { id: 1, name: 'Alimentos Activos', filterType: 'DONATION', category: 'ALIMENTOS', isDeleted: false },
+                { id: 2, name: 'Ropa Diciembre', filterType: 'DONATION', category: 'ROPA', startDate: '2024-12-01', endDate: '2024-12-31' }
+            ];
+
+            const filter = savedFilters.find(f => f.id === filterId);
+            if (filter) {
+                document.getElementById('categoryFilter').value = filter.category || '';
+                document.getElementById('startDateFilter').value = filter.startDate || '';
+                document.getElementById('endDateFilter').value = filter.endDate || '';
+                document.getElementById('deletedFilter').value = filter.isDeleted !== null ? filter.isDeleted.toString() : '';
+
+                applyFilters();
+                alert(`✅ Filtro "${filter.name}" aplicado exitosamente!`);
+            }
+        }
+
+        function editSavedFilter(filterId) {
+            alert(`✏️ Editando filtro ${filterId}\n\nFunción a implementar con mutación GraphQL updateCustomFilter`);
+        }
+
+        function deleteSavedFilter(filterId) {
+            if (confirm('¿Está seguro de eliminar este filtro?')) {
+                alert(`🗑️ Eliminando filtro ${filterId}\n\nFunción a implementar con mutación GraphQL deleteCustomFilter`);
+                loadSavedFilters();
+            }
         }
 
         applyFilters();

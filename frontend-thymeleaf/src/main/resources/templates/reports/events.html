@@ -104,15 +104,62 @@
                                         <input type="date" class="form-control" id="startDateFilter" required>
                                     </div>
                                     <div class="col-md-2">
+                                        <label for="endDateFilter" class="form-label">Fecha Hasta *</label>
                                         <input type="date" class="form-control" id="endDateFilter" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="userFilter" class="form-label">Usuario</label>
+                                        <select class="form-select" id="userFilter">
+                                            <option value="">Todos los usuarios</option>
+                                            <option value="1">Juan Pérez</option>
+                                            <option value="2">María González</option>
+                                            <option value="3">Carlos Rodríguez</option>
+                                            <option value="4">Ana López</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="donationFilter" class="form-label">Con Donaciones</label>
+                                        <select class="form-select" id="donationFilter">
+                                            <option value="">Ambos</option>
+                                            <option value="true">Con donaciones</option>
+                                            <option value="false">Sin donaciones</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label">&nbsp;</label>
                                         <div>
                                             <button type="button" class="btn btn-primary" onclick="applyFilters()">🔍 Buscar</button>
                                             <button type="button" class="btn btn-secondary" onclick="clearFilters()">🗑️ Limpiar</button>
+                                            <button type="button" class="btn btn-success btn-sm" onclick="saveCurrentFilter()">💾 Guardar Filtros</button>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtros Guardados -->
+                <div class="row mb-4" id="savedFiltersSection" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6>💾 Filtros Personalizados</h6>
+                                <div>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSavedFilters()">👁️ Ver/Ocultar</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="savedFiltersList">
+                                    <!-- Aquí se mostrarán los filtros guardados -->
+                                </div>
+                                <div id="saveFilterForm" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="filterName" class="form-label">Nombre del Filtro</label>
+                                        <input type="text" class="form-control" id="filterName" placeholder="Ej: Eventos con Donaciones">
+                                    </div>
+                                    <button type="button" class="btn btn-primary" onclick="confirmSaveFilter()">✅ Guardar</button>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelSaveFilter()">❌ Cancelar</button>
                                 </div>
                             </div>
                         </div>
@@ -186,11 +233,18 @@
                 return;
             }
 
-            console.log('Aplicando filtros de fechas:', startDate, endDate);
-            loadEventData(startDate, endDate);
+            currentFilters = {
+                startDate: startDate,
+                endDate: endDate,
+                userId: document.getElementById('userFilter').value,
+                hasDonationDistribution: document.getElementById('donationFilter').value
+            };
+
+            console.log('Aplicando filtros:', currentFilters);
+            loadEventData(currentFilters);
         }
 
-        function loadEventData(startDate, endDate) {
+        function loadEventData(filters) {
             const mockData = [
                 {
                     year: 2024,
@@ -198,7 +252,8 @@
                     eventDate: '2024-12-15T10:00:00',
                     eventName: 'Colecta de Alimentos',
                     eventDescription: 'Recolección de alimentos no perecederos',
-                    hasDonationDistribution: true
+                    hasDonationDistribution: true,
+                    participants: ['María González', 'Carlos Rodríguez']
                 },
                 {
                     year: 2024,
@@ -206,7 +261,8 @@
                     eventDate: '2024-12-20T14:00:00',
                     eventName: 'Jornada de Voluntariado',
                     eventDescription: 'Actividades comunitarias',
-                    hasDonationDistribution: false
+                    hasDonationDistribution: false,
+                    participants: ['Ana López', 'Juan Pérez', 'Laura Martínez']
                 }
             ];
 
@@ -216,17 +272,77 @@
         function displayResults(data) {
             document.getElementById('resultsCount').textContent = `${data.length} eventos`;
 
+            const eventsByMonth = {};
+            data.forEach(event => {
+                const key = `${event.year}-${String(event.month).padStart(2, '0')}`;
+                if (!eventsByMonth[key]) {
+                    eventsByMonth[key] = [];
+                }
+                eventsByMonth[key].push(event);
+            });
+
+            displayMonthlyEvents(eventsByMonth);
+
+            displayEventsTable(data);
+        }
+
+        function displayMonthlyEvents(eventsByMonth) {
+            const container = document.createElement('div');
+            container.className = 'row mb-4';
+            container.innerHTML = '';
+
+            Object.entries(eventsByMonth).forEach(([monthYear, events]) => {
+                const [year, month] = monthYear.split('-');
+                const monthName = new Date(year, month - 1).toLocaleString('es', { month: 'long', year: 'numeric' });
+
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'mb-4';
+                monthDiv.innerHTML = `
+                    <h5 class="text-primary mb-3">📅 ${monthName}</h5>
+                    <div class="row">
+                        ${events.map(event => `
+                            <div class="col-md-6 mb-3">
+                                <div class="card event-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6>${event.eventName}</h6>
+                                                <p class="mb-2">${event.eventDescription}</p>
+                                                <small>📅 ${new Date(event.eventDate).toLocaleDateString()}</small><br>
+                                                <small>👥 ${event.participants.length} participantes</small><br>
+                                                <small>${event.hasDonationDistribution ? '🎁 Con donaciones' : '📋 Sin donaciones'}</small>
+                                            </div>
+                                            <span class="badge bg-light text-dark">${event.participants.length}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                const resultsCard = document.querySelector('.card');
+                if (resultsCard && !resultsCard.querySelector('.row.mb-4')) {
+                    resultsCard.insertBefore(monthDiv, resultsCard.firstChild);
+                }
+            });
+        }
+
+        function displayEventsTable(data) {
             const tbody = document.getElementById('eventsTableBody');
             tbody.innerHTML = '';
 
             data.forEach(event => {
                 const row = document.createElement('tr');
+                const monthYear = `${event.year}-${String(event.month).padStart(2, '0')}`;
                 row.innerHTML = `
+                    <td>${monthYear}</td>
                     <td>${new Date(event.eventDate).toLocaleDateString()}</td>
                     <td>${event.eventName}</td>
                     <td>${event.eventDescription}</td>
                     <td><span class="badge ${event.hasDonationDistribution ? 'bg-success' : 'bg-secondary'}">
                         ${event.hasDonationDistribution ? 'Sí' : 'No'}</span></td>
+                    <td>${event.participants.join(', ')}</td>
                 `;
                 tbody.appendChild(row);
             });
@@ -235,6 +351,115 @@
         function clearFilters() {
             document.getElementById('startDateFilter').value = '';
             document.getElementById('endDateFilter').value = '';
+            document.getElementById('userFilter').value = '';
+            document.getElementById('donationFilter').value = '';
+            currentFilters = {};
+        }
+
+        function saveCurrentFilter() {
+            if (Object.keys(currentFilters).length === 0) {
+                alert('⚠️ Debe aplicar filtros antes de guardarlos');
+                return;
+            }
+
+            const form = document.getElementById('saveFilterForm');
+            const list = document.getElementById('savedFiltersList');
+
+            list.style.display = 'none';
+            form.style.display = 'block';
+        }
+
+        function cancelSaveFilter() {
+            const form = document.getElementById('saveFilterForm');
+            const list = document.getElementById('savedFiltersList');
+
+            form.style.display = 'none';
+            list.style.display = 'block';
+            document.getElementById('filterName').value = '';
+        }
+
+        function confirmSaveFilter() {
+            const filterName = document.getElementById('filterName').value.trim();
+
+            if (!filterName) {
+                alert('⚠️ Debe ingresar un nombre para el filtro');
+                return;
+            }
+
+            alert(`💾 Filtro "${filterName}" guardado exitosamente!\n\nFiltros aplicados:\n${JSON.stringify(currentFilters, null, 2)}`);
+
+            cancelSaveFilter();
+            loadSavedFilters();
+        }
+
+        function toggleSavedFilters() {
+            const section = document.getElementById('savedFiltersSection');
+            const button = event.target;
+
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                button.textContent = '👁️ Ocultar';
+                loadSavedFilters();
+            } else {
+                section.style.display = 'none';
+                button.textContent = '👁️ Ver';
+            }
+        }
+
+        function loadSavedFilters() {
+            savedFilters = [
+                { id: 1, name: 'Eventos con Donaciones', filterType: 'EVENT_PARTICIPATION', hasDonationDistribution: true },
+                { id: 2, name: 'Mi Participación', filterType: 'EVENT_PARTICIPATION', userId: '1' }
+            ];
+
+            const container = document.getElementById('savedFiltersList');
+            container.innerHTML = '';
+
+            if (savedFilters.length === 0) {
+                container.innerHTML = '<p class="text-muted">No hay filtros guardados</p>';
+                return;
+            }
+
+            savedFilters.forEach(filter => {
+                const div = document.createElement('div');
+                div.className = 'd-flex justify-content-between align-items-center mb-2 p-2 border rounded';
+                div.innerHTML = `
+                    <div>
+                        <strong>${filter.name}</strong><br>
+                        <small class="text-muted">${JSON.stringify(filter)}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-primary me-1" onclick="applySavedFilter(${filter.id})">🔍 Usar</button>
+                        <button class="btn btn-sm btn-warning me-1" onclick="editSavedFilter(${filter.id})">✏️ Editar</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSavedFilter(${filter.id})">🗑️ Eliminar</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function applySavedFilter(filterId) {
+            const filter = savedFilters.find(f => f.id === filterId);
+            if (filter) {
+                document.getElementById('startDateFilter').value = filter.startDate || '';
+                document.getElementById('endDateFilter').value = filter.endDate || '';
+                document.getElementById('userFilter').value = filter.userId || '';
+                document.getElementById('donationFilter').value = filter.hasDonationDistribution !== undefined ? filter.hasDonationDistribution.toString() : '';
+
+                currentFilters = { ...filter };
+                applyFilters();
+            }
+        }
+
+        function editSavedFilter(filterId) {
+            alert(`✏️ Editando filtro ${filterId}\n\nFunción a implementar con mutación GraphQL updateCustomFilter`);
+        }
+
+        function deleteSavedFilter(filterId) {
+            if (confirm('¿Está seguro de eliminar este filtro?')) {
+                alert(`🗑️ Eliminando filtro ${filterId}\n\nFunción a implementar con mutación GraphQL deleteCustomFilter`);
+                loadSavedFilters();
+            }
         }
 
         const today = new Date();
